@@ -322,6 +322,55 @@ class Aardbei_Reserveringen_Reservations {
 	}
 
 	/**
+	 * Vergelijk deze week met vorige week (geboekte personen).
+	 *
+	 * @return array|null
+	 */
+	public function get_weekly_comparison() {
+		global $wpdb;
+
+		$reservations_table = Aardbei_Reserveringen_Database::get_reservations_table();
+		$slots_table        = Aardbei_Reserveringen_Database::get_slots_table();
+
+		$today      = current_time( 'Y-m-d' );
+		$this_start = date( 'Y-m-d', strtotime( 'monday this week', strtotime( $today ) ) );
+		$this_end   = date( 'Y-m-d', strtotime( 'sunday this week', strtotime( $today ) ) );
+		$prev_start = date( 'Y-m-d', strtotime( '-7 days', strtotime( $this_start ) ) );
+		$prev_end   = date( 'Y-m-d', strtotime( '-7 days', strtotime( $this_end ) ) );
+
+		$this_week = (int) $wpdb->get_var(
+			$wpdb->prepare(
+				"SELECT COALESCE(SUM(r.persons), 0)
+				FROM {$reservations_table} r
+				INNER JOIN {$slots_table} s ON s.id = r.slot_id
+				WHERE s.date BETWEEN %s AND %s AND r.status = 'confirmed'",
+				$this_start,
+				$this_end
+			)
+		);
+
+		$last_week = (int) $wpdb->get_var(
+			$wpdb->prepare(
+				"SELECT COALESCE(SUM(r.persons), 0)
+				FROM {$reservations_table} r
+				INNER JOIN {$slots_table} s ON s.id = r.slot_id
+				WHERE s.date BETWEEN %s AND %s AND r.status = 'confirmed'",
+				$prev_start,
+				$prev_end
+			)
+		);
+
+		$diff = $this_week - $last_week;
+
+		return array(
+			'this_week' => $this_week,
+			'last_week' => $last_week,
+			'diff'      => abs( $diff ),
+			'trend'     => $diff > 0 ? 'up' : ( $diff < 0 ? 'down' : 'flat' ),
+		);
+	}
+
+	/**
 	 * Dashboard statistieken.
 	 *
 	 * @return array

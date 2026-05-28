@@ -116,7 +116,17 @@ class Aardbei_Reserveringen_Frontend {
 		wp_enqueue_script( 'aardbei-popup' );
 		$this->popup_rendered = true;
 
-		return $this->get_popup_html();
+		// Render in wp_footer to avoid stacking context issues with theme transforms.
+		add_action( 'wp_footer', array( $this, '_render_popup_in_footer' ), 10 );
+
+		return '';
+	}
+
+	/**
+	 * Footer callback voor popup HTML (via shortcode).
+	 */
+	public function _render_popup_in_footer() {
+		echo $this->get_popup_html(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 	}
 
 	/**
