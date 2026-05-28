@@ -178,31 +178,219 @@ class Aardbei_Reserveringen_Frontend {
 	 * Annuleren via mailtoken.
 	 */
 	public function handle_cancel_request() {
-		if ( empty( $_GET['aardbei_cancel'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		if ( empty( $_GET['aardbei_cancel'] ) && empty( $_POST['aardbei_confirm_cancel'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 			return;
 		}
 
-		$token        = isset( $_GET['token'] ) ? sanitize_text_field( wp_unslash( $_GET['token'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
-		$reservations = new Aardbei_Reserveringen_Reservations();
-		$result       = $reservations->cancel_reservation_by_token( $token );
+		// Handle POST confirmation submission
+		if ( $_SERVER['REQUEST_METHOD'] === 'POST' && isset( $_POST['aardbei_confirm_cancel'] ) ) {
+			if ( ! isset( $_POST['aardbei_cancel_nonce'] ) || ! wp_verify_nonce( $_POST['aardbei_cancel_nonce'], 'aardbei_confirm_cancel_action' ) ) {
+				wp_die( esc_html__( 'Ongeldige beveiligingscontrole.', 'aardbei-reserveringen' ), 403 );
+			}
 
-		if ( is_wp_error( $result ) ) {
-			$title   = __( 'Annuleren mislukt', 'aardbei-reserveringen' );
-			$message = $result->get_error_message();
-			$status  = 400;
-		} else {
-			$title   = __( 'Reservering geannuleerd', 'aardbei-reserveringen' );
-			$message = __( 'Je reservering is geannuleerd.', 'aardbei-reserveringen' );
-			$status  = 200;
+			$token        = isset( $_POST['token'] ) ? sanitize_text_field( wp_unslash( $_POST['token'] ) ) : '';
+			$reservations = new Aardbei_Reserveringen_Reservations();
+			$result       = $reservations->cancel_reservation_by_token( $token );
+
+			if ( is_wp_error( $result ) ) {
+				$title   = __( 'Annuleren mislukt', 'aardbei-reserveringen' );
+				$message = $result->get_error_message();
+				$status  = 400;
+			} else {
+				$title   = __( 'Reservering geannuleerd', 'aardbei-reserveringen' );
+				$message = __( 'Je reservering is succesvol geannuleerd.', 'aardbei-reserveringen' );
+				$status  = 200;
+			}
+
+			$html = $this->get_cancel_page_html( $title, $message, false );
+			wp_die( wp_kses_post( $html ), esc_html( $title ), array( 'response' => $status ) );
 		}
 
-		$html = '<div class="aardbei-cancel-page" style="max-width:680px;margin:48px auto;font-family:system-ui,sans-serif;line-height:1.5;">';
-		$html .= '<h1>' . esc_html( $title ) . '</h1>';
-		$html .= '<p>' . esc_html( $message ) . '</p>';
-		$html .= '<p><a href="' . esc_url( home_url( '/' ) ) . '">' . esc_html__( 'Terug naar de website', 'aardbei-reserveringen' ) . '</a></p>';
-		$html .= '</div>';
+		// Handle GET confirmation page load
+		$token = isset( $_GET['token'] ) ? sanitize_text_field( wp_unslash( $_GET['token'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		if ( empty( $token ) ) {
+			$title   = __( 'Annuleren mislukt', 'aardbei-reserveringen' );
+			$message = __( 'Deze annuleringslink is ongeldig.', 'aardbei-reserveringen' );
+			$html    = $this->get_cancel_page_html( $title, $message, false );
+			wp_die( wp_kses_post( $html ), esc_html( $title ), array( 'response' => 400 ) );
+		}
 
-		wp_die( wp_kses_post( $html ), esc_html( $title ), array( 'response' => $status ) );
+		global $wpdb;
+		$table       = Aardbei_Reserveringen_Database::get_reservations_table();
+		$reservation = $wpdb->get_row(
+			$wpdb->prepare( "SELECT * FROM {$table} WHERE cancel_token = %s", $token ),
+			ARRAY_A
+		);
+
+		if ( ! $reservation ) {
+			$title   = __( 'Annuleren mislukt', 'aardbei-reserveringen' );
+			$message = __( 'Deze annuleringslink is ongeldig of de reservering bestaat niet.', 'aardbei-reserveringen' );
+			$html    = $this->get_cancel_page_html( $title, $message, false );
+			wp_die( wp_kses_post( $html ), esc_html( $title ), array( 'response' => 404 ) );
+		}
+
+		if ( 'cancelled' === $reservation['status'] ) {
+			$title   = __( 'Al geannuleerd', 'aardbei-reserveringen' );
+			$message = __( 'Deze reservering is al geannuleerd.', 'aardbei-reserveringen' );
+			$html    = $this->get_cancel_page_html( $title, $message, false );
+			wp_die( wp_kses_post( $html ), esc_html( $title ), array( 'response' => 200 ) );
+		}
+
+		$slots_table = Aardbei_Reserveringen_Database::get_slots_table();
+		$slot = $wpdb->get_row(
+			$wpdb->prepare( "SELECT date, start_time, end_time FROM {$slots_table} WHERE id = %d", $reservation['slot_id'] ),
+			ARRAY_A
+		);
+
+		$date_str = '';
+		if ( $slot ) {
+			$date_str = date_i18n( 'l j F Y', strtotime( $slot['date'] ) ) . ' (' . substr( $slot['start_time'], 0, 5 ) . ' - ' . substr( $slot['end_time'], 0, 5 ) . ')';
+		}
+
+		$title = __( 'Reservering annuleren', 'aardbei-reserveringen' );
+		$message = sprintf(
+			/* translators: 1: name, 2: persons, 3: date/time */
+			__( 'Beste %1$s, weet je zeker dat je de reservering voor %2$d perso(o)n(en) op %3$s wilt annuleren?', 'aardbei-reserveringen' ),
+			'<strong>' . esc_html( $reservation['name'] ) . '</strong>',
+			(int) $reservation['persons'],
+			'<strong>' . esc_html( $date_str ) . '</strong>'
+		);
+
+		$html = $this->get_cancel_page_html( $title, $message, true, $token );
+		wp_die( wp_kses_post( $html ), esc_html( $title ), array( 'response' => 200 ) );
+	}
+
+	/**
+	 * Render a beautiful, premium cancel confirmation/result page.
+	 *
+	 * @param string $title Page title.
+	 * @param string $message Page content.
+	 * @param bool   $show_form Whether to show the confirmation form.
+	 * @param string $token The cancel token (if showing form).
+	 * @return string
+	 */
+	private function get_cancel_page_html( $title, $message, $show_form = false, $token = '' ) {
+		$bg_color    = Aardbei_Reserveringen_Settings::get_setting( 'popup_button_bg_color', '#cf2e2e' );
+		$hover_color = Aardbei_Reserveringen_Settings::get_setting( 'popup_button_hover_color', '#a82424' );
+
+		ob_start();
+		?>
+		<style>
+			body {
+				background-color: #f7f9fa;
+				margin: 0;
+				padding: 0;
+				font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				min-height: 100vh;
+				color: #1e293b;
+			}
+			.aardbei-cancel-container {
+				width: 100%;
+				max-width: 500px;
+				padding: 24px;
+				box-sizing: border-box;
+			}
+			.aardbei-cancel-card {
+				background: #ffffff;
+				border-radius: 16px;
+				box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.05);
+				border: 1px solid #f1f5f9;
+				padding: 40px 32px;
+				text-align: center;
+				transition: transform 0.2s ease, box-shadow 0.2s ease;
+			}
+			.aardbei-cancel-icon {
+				font-size: 48px;
+				margin-bottom: 20px;
+				line-height: 1;
+			}
+			.aardbei-cancel-card h1 {
+				font-size: 24px;
+				font-weight: 700;
+				margin: 0 0 16px 0;
+				color: #0f172a;
+				letter-spacing: -0.025em;
+			}
+			.aardbei-cancel-card p {
+				font-size: 16px;
+				line-height: 1.6;
+				color: #475569;
+				margin: 0 0 32px 0;
+			}
+			.aardbei-cancel-card p strong {
+				color: #0f172a;
+			}
+			.aardbei-cancel-form {
+				display: flex;
+				flex-direction: column;
+				gap: 12px;
+			}
+			.aardbei-btn {
+				display: inline-flex;
+				align-items: center;
+				justify-content: center;
+				padding: 14px 24px;
+				font-size: 16px;
+				font-weight: 600;
+				border-radius: 10px;
+				border: none;
+				cursor: pointer;
+				transition: all 0.2s ease;
+				text-decoration: none;
+				width: 100%;
+				box-sizing: border-box;
+			}
+			.aardbei-btn-primary {
+				background-color: <?php echo esc_attr( $bg_color ); ?>;
+				color: #ffffff;
+			}
+			.aardbei-btn-primary:hover {
+				background-color: <?php echo esc_attr( $hover_color ); ?>;
+				transform: translateY(-1px);
+				box-shadow: 0 4px 12px rgba(207, 46, 46, 0.2);
+			}
+			.aardbei-btn-secondary {
+				background-color: #f1f5f9;
+				color: #475569;
+			}
+			.aardbei-btn-secondary:hover {
+				background-color: #e2e8f0;
+				color: #1e293b;
+			}
+		</style>
+		<div class="aardbei-cancel-container">
+			<div class="aardbei-cancel-card">
+				<div class="aardbei-cancel-icon">🍓</div>
+				<h1><?php echo esc_html( $title ); ?></h1>
+				<div style="font-size: 16px; line-height: 1.6; color: #475569; margin: 0 0 32px 0;">
+					<?php echo $message; // Already escaped/prepared via wp_kses_post or esc_html ?>
+				</div>
+				
+				<?php if ( $show_form ) : ?>
+					<form method="POST" class="aardbei-cancel-form">
+						<?php wp_nonce_field( 'aardbei_confirm_cancel_action', 'aardbei_cancel_nonce' ); ?>
+						<input type="hidden" name="token" value="<?php echo esc_attr( $token ); ?>">
+						<input type="hidden" name="aardbei_confirm_cancel" value="1">
+						
+						<button type="submit" class="aardbei-btn aardbei-btn-primary">
+							<?php echo esc_html__( 'Ja, annuleer mijn reservering', 'aardbei-reserveringen' ); ?>
+						</button>
+						<a href="<?php echo esc_url( home_url( '/' ) ); ?>" class="aardbei-btn aardbei-btn-secondary">
+							<?php echo esc_html__( 'Nee, ga terug', 'aardbei-reserveringen' ); ?>
+						</a>
+					</form>
+				<?php else : ?>
+					<a href="<?php echo esc_url( home_url( '/' ) ); ?>" class="aardbei-btn aardbei-btn-secondary">
+						<?php echo esc_html__( 'Terug naar de website', 'aardbei-reserveringen' ); ?>
+					</a>
+				<?php endif; ?>
+			</div>
+		</div>
+		<?php
+		return ob_get_clean();
 	}
 
 	/**
@@ -279,7 +467,8 @@ class Aardbei_Reserveringen_Frontend {
 		$card_subtitle = $settings['frontend_card_subtitle'];
 		$image_url    = $settings['frontend_card_image_url'];
 		$started_at   = (string) current_time( 'timestamp' );
-		$spam_token   = wp_hash( $started_at . '|aardbei_reservation_form' );
+		$spam_random  = wp_generate_password( 12, false, false );
+		$spam_token   = wp_hash( $started_at . '|' . $spam_random . '|aardbei_reservation_form' );
 
 		ob_start();
 		?>
@@ -365,6 +554,7 @@ class Aardbei_Reserveringen_Frontend {
 				<input type="hidden" name="slot_id" data-aardbei-slot-id value="">
 				<input type="hidden" name="persons" data-aardbei-persons-input value="2">
 				<input type="hidden" name="aardbei_started_at" value="<?php echo esc_attr( $started_at ); ?>">
+				<input type="hidden" name="aardbei_spam_random" value="<?php echo esc_attr( $spam_random ); ?>">
 				<input type="hidden" name="aardbei_spam_token" value="<?php echo esc_attr( $spam_token ); ?>">
 				<div class="aardbei-honeypot" aria-hidden="true">
 					<label>

@@ -541,7 +541,7 @@
 			return 'https://calendar.google.com/calendar/r/eventedit?text=' + text + '&dates=' + startStr + '/' + endStr;
 		}
 
-		function showConfirmation(submittedData, slotInfo, reservationId) {
+		function showConfirmation(submittedData, slotInfo, reservationId, cancelToken) {
 			var dateLabel = slotInfo ? formatDateLabel(slotInfo.date) : '';
 			var timeLabel = slotInfo ? (slotInfo.startTime + ' – ' + slotInfo.endTime) : '';
 			var guestText = state.persons === 1 ? '1 gast' : state.persons + ' gasten';
@@ -597,7 +597,7 @@
 						+ '</a>';
 				}
 				if (reservationId) {
-					var icsUrl = aardbeiFrontend.ajaxUrl + '?action=aardbei_download_ics&reservation_id=' + encodeURIComponent(reservationId) + '&nonce=' + encodeURIComponent(aardbeiFrontend.nonce);
+					var icsUrl = aardbeiFrontend.ajaxUrl + '?action=aardbei_download_ics&reservation_id=' + encodeURIComponent(reservationId) + '&token=' + encodeURIComponent(cancelToken || '') + '&nonce=' + encodeURIComponent(aardbeiFrontend.nonce);
 					html += '<a href="' + icsUrl + '" class="aardbei-calendar-link aardbei-calendar-link--ics">'
 						+ '<svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>'
 						+ escapeHtml((aardbeiFrontend.i18n && aardbeiFrontend.i18n.downloadIcs) || 'iCal (.ics)')
@@ -677,10 +677,11 @@
 
 					var slotInfo = getSelectedSlot();
 					var reservationId = json.data && json.data.reservation_id ? json.data.reservation_id : null;
+					var cancelToken = json.data && json.data.cancel_token ? json.data.cancel_token : '';
 					form.hidden = true;
 					setMessage(formMessage, '', '');
 					setMessage(mainMessage, '', '');
-					showConfirmation(submittedData, slotInfo, reservationId);
+					showConfirmation(submittedData, slotInfo, reservationId, cancelToken);
 					fetchSlots(true);
 				}).catch(function () {
 					setMessage(formMessage, 'Reserveren is niet gelukt. Probeer het opnieuw.', 'error');

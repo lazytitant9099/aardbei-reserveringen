@@ -33,7 +33,10 @@
 		}
 
 		toast.className = 'aardbei-toast aardbei-toast--' + (type || 'info');
-		toast.innerHTML = iconSvg + '<span>' + message + '</span>';
+		toast.innerHTML = iconSvg;
+		var span = document.createElement('span');
+		span.textContent = message;
+		toast.appendChild(span);
 		container.appendChild(toast);
 
 		setTimeout(function () {

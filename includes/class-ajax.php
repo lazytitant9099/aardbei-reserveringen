@@ -93,9 +93,15 @@ class Aardbei_Reserveringen_Ajax {
 			);
 		}
 
+		$reservation_id = (int) $result;
+		global $wpdb;
+		$table = Aardbei_Reserveringen_Database::get_reservations_table();
+		$cancel_token = $wpdb->get_var( $wpdb->prepare( "SELECT cancel_token FROM {$table} WHERE id = %d", $reservation_id ) );
+
 		wp_send_json_success(
 			array(
-				'reservation_id' => (int) $result,
+				'reservation_id' => $reservation_id,
+				'cancel_token'   => $cancel_token ? $cancel_token : '',
 				'message'        => __( 'Je reservering is ontvangen. Je ontvangt zo een bevestiging per e-mail.', 'aardbei-reserveringen' ),
 			)
 		);
@@ -275,7 +281,8 @@ class Aardbei_Reserveringen_Ajax {
 		}
 
 		$reservation_id = isset( $_GET['reservation_id'] ) ? absint( wp_unslash( $_GET['reservation_id'] ) ) : 0;
-		if ( ! $reservation_id ) {
+		$token          = isset( $_GET['token'] ) ? sanitize_text_field( wp_unslash( $_GET['token'] ) ) : '';
+		if ( ! $reservation_id || ! $token ) {
 			wp_die( esc_html__( 'Ongeldige reservering.', 'aardbei-reserveringen' ), 400 );
 		}
 
@@ -288,8 +295,9 @@ class Aardbei_Reserveringen_Ajax {
 				"SELECT r.name, r.email, r.persons, r.cancel_token, s.date, s.start_time, s.end_time
 				FROM {$reservations_table} r
 				INNER JOIN {$slots_table} s ON s.id = r.slot_id
-				WHERE r.id = %d AND r.status = 'confirmed'",
-				$reservation_id
+				WHERE r.id = %d AND r.cancel_token = %s AND r.status = 'confirmed'",
+				$reservation_id,
+				$token
 			),
 			ARRAY_A
 		);

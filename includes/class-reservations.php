@@ -30,8 +30,26 @@ class Aardbei_Reserveringen_Reservations {
 		$persons = isset( $data['persons'] ) ? absint( $data['persons'] ) : 0;
 		$note    = isset( $data['note'] ) ? sanitize_textarea_field( wp_unslash( $data['note'] ) ) : '';
 
+		$ip = '';
+		if ( ! empty( $_SERVER['REMOTE_ADDR'] ) ) {
+			$ip = sanitize_text_field( wp_unslash( $_SERVER['REMOTE_ADDR'] ) );
+		}
+
+		$ip_key      = $ip ? 'aardbei_rl_ip_' . md5( $ip ) : '';
+		$ip_count    = $ip_key ? (int) get_transient( $ip_key ) : 0;
+		$email_key   = $email ? 'aardbei_rl_email_' . md5( $email ) : '';
+		$email_count = $email_key ? (int) get_transient( $email_key ) : 0;
+
 		if ( ! $this->passes_spam_check( $data ) ) {
 			return new WP_Error( 'spam_detected', __( 'De reservering kon niet worden opgeslagen. Probeer het opnieuw.', 'aardbei-reserveringen' ) );
+		}
+
+		if ( $ip_key && $ip_count >= 5 ) {
+			return new WP_Error( 'rate_limit_exceeded', __( 'Te veel reserveringen vanaf dit IP-adres. Probeer het later opnieuw.', 'aardbei-reserveringen' ) );
+		}
+
+		if ( $email_key && $email_count >= 3 ) {
+			return new WP_Error( 'rate_limit_exceeded', __( 'Te veel reserveringen voor dit e-mailadres. Probeer het later opnieuw.', 'aardbei-reserveringen' ) );
 		}
 
 		if ( ! $slot_id ) {
@@ -130,6 +148,20 @@ class Aardbei_Reserveringen_Reservations {
 		$reservation_id = (int) $wpdb->insert_id;
 		$wpdb->query( 'COMMIT' ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
 
+		// Mark token as used to prevent replays
+		$token = isset( $data['aardbei_spam_token'] ) ? sanitize_text_field( wp_unslash( $data['aardbei_spam_token'] ) ) : '';
+		if ( $token ) {
+			set_transient( 'aardbei_used_token_' . $token, 1, 3600 );
+		}
+
+		// Increment rate limiting transients
+		if ( $ip_key ) {
+			set_transient( $ip_key, $ip_count + 1, HOUR_IN_SECONDS );
+		}
+		if ( $email_key ) {
+			set_transient( $email_key, $email_count + 1, HOUR_IN_SECONDS );
+		}
+
 		$mailer = new Aardbei_Reserveringen_Mailer();
 		$mailer->send_customer_confirmation( $reservation_id );
 		$mailer->send_admin_notification( $reservation_id );
@@ -146,18 +178,26 @@ class Aardbei_Reserveringen_Reservations {
 	private function passes_spam_check( $data ) {
 		$honeypot   = isset( $data['website'] ) ? sanitize_text_field( wp_unslash( $data['website'] ) ) : '';
 		$started_at = isset( $data['aardbei_started_at'] ) ? absint( $data['aardbei_started_at'] ) : 0;
+		$random     = isset( $data['aardbei_spam_random'] ) ? sanitize_text_field( wp_unslash( $data['aardbei_spam_random'] ) ) : '';
 		$token      = isset( $data['aardbei_spam_token'] ) ? sanitize_text_field( wp_unslash( $data['aardbei_spam_token'] ) ) : '';
 
-		if ( '' !== trim( $honeypot ) || ! $started_at || '' === $token ) {
+		if ( '' !== trim( $honeypot ) || ! $started_at || '' === $random || '' === $token ) {
 			return false;
 		}
 
-		$expected_token = wp_hash( $started_at . '|aardbei_reservation_form' );
+		// Enforce token reuse restriction (transient check)
+		if ( get_transient( 'aardbei_used_token_' . $token ) ) {
+			return false;
+		}
+
+		$expected_token = wp_hash( $started_at . '|' . $random . '|aardbei_reservation_form' );
 		if ( ! hash_equals( $expected_token, $token ) ) {
 			return false;
 		}
 
-		return current_time( 'timestamp' ) - $started_at >= 3;
+		$elapsed = current_time( 'timestamp' ) - $started_at;
+		// Must take at least 3 seconds, but no more than 1 hour (3600 seconds)
+		return $elapsed >= 3 && $elapsed <= 3600;
 	}
 
 	/**
