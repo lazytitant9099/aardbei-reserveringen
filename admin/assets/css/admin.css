@@ -85,6 +85,28 @@
 	margin: 28px 0 12px;
 }
 
+.aardbei-section-header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 12px;
+	flex-wrap: wrap;
+	margin: 28px 0 12px;
+}
+
+.aardbei-section-header .aardbei-section-title {
+	margin: 0 !important;
+}
+
+.aardbei-section-meta {
+	font-size: 12px;
+	font-weight: 600;
+	color: var(--aa-neutral-600);
+	background: var(--aa-neutral-100);
+	border-radius: 999px;
+	padding: 4px 10px;
+}
+
 /* ---- Cards ---- */
 .aardbei-card {
 	background: #fff;
@@ -113,6 +135,141 @@
 	text-align: center;
 	color: var(--aa-neutral-400);
 	padding: 40px !important;
+}
+
+/* ============================================================
+   Dashboard overview
+   ============================================================ */
+.aardbei-dashboard-overview {
+	display: grid;
+	grid-template-columns: minmax(0, 1.3fr) minmax(300px, .7fr);
+	gap: 14px;
+	margin: 0 0 28px;
+}
+
+.aardbei-overview-card {
+	background: #fff;
+	border: 1px solid var(--aa-neutral-200);
+	border-radius: var(--aa-radius);
+	box-shadow: var(--aa-shadow);
+	padding: 20px;
+}
+
+.aardbei-overview-card--capacity {
+	border-top: 3px solid var(--aa-primary);
+}
+
+.aardbei-overview-card-header,
+.aardbei-overview-main {
+	display: flex;
+	align-items: flex-start;
+	justify-content: space-between;
+	gap: 16px;
+}
+
+.aardbei-overview-eyebrow {
+	font-size: 11px;
+	font-weight: 700;
+	text-transform: uppercase;
+	letter-spacing: 0;
+	color: var(--aa-neutral-400);
+	margin-bottom: 5px;
+}
+
+.aardbei-admin-wrap .aardbei-overview-title {
+	margin: 0;
+	font-size: 20px;
+	line-height: 1.2;
+	font-weight: 800;
+	color: var(--aa-neutral-900);
+}
+
+.aardbei-admin-wrap .aardbei-overview-title--sm {
+	font-size: 16px;
+}
+
+.aardbei-overview-subtitle,
+.aardbei-empty-state-copy {
+	margin: 6px 0 0;
+	color: var(--aa-neutral-600);
+	font-size: 13px;
+	line-height: 1.45;
+}
+
+.aardbei-overview-percent {
+	font-size: 34px;
+	line-height: 1;
+	color: var(--aa-primary);
+	white-space: nowrap;
+}
+
+.aardbei-overview-progress {
+	width: 100%;
+	height: 9px;
+	background: var(--aa-neutral-100);
+	border-radius: 999px;
+	overflow: hidden;
+	margin: 18px 0;
+}
+
+.aardbei-overview-progress span {
+	display: block;
+	height: 100%;
+	border-radius: inherit;
+	background: var(--aa-primary);
+	transition: width 300ms;
+}
+
+.aardbei-overview-progress--today span {
+	background: #3b82f6;
+}
+
+.aardbei-overview-metrics {
+	display: grid;
+	grid-template-columns: repeat(3, minmax(0, 1fr));
+	gap: 10px;
+}
+
+.aardbei-overview-metrics--compact {
+	margin-bottom: 16px;
+}
+
+.aardbei-overview-metric {
+	min-width: 0;
+	background: var(--aa-neutral-50);
+	border: 1px solid var(--aa-neutral-100);
+	border-radius: var(--aa-radius-sm);
+	padding: 10px 12px;
+}
+
+.aardbei-overview-metric strong {
+	display: block;
+	color: var(--aa-neutral-900);
+	font-size: 13px;
+	font-weight: 800;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.aardbei-overview-metric span {
+	display: block;
+	color: var(--aa-neutral-400);
+	font-size: 12px;
+	margin-top: 2px;
+}
+
+.aardbei-pill {
+	display: inline-flex;
+	align-items: center;
+	height: 26px;
+	padding: 0 10px;
+	border-radius: 999px;
+	background: #eff6ff;
+	color: #1d4ed8;
+	font-size: 12px;
+	font-weight: 700;
+	white-space: nowrap;
 }
 
 /* ============================================================
@@ -213,7 +370,7 @@
 	font-size: 11px;
 	font-weight: 600;
 	text-transform: uppercase;
-	letter-spacing: 0.06em;
+	letter-spacing: 0;
 	color: var(--aa-neutral-400);
 	margin-bottom: 4px;
 	white-space: nowrap;
@@ -273,7 +430,7 @@
 	font-size: 11px;
 	font-weight: 700;
 	text-transform: uppercase;
-	letter-spacing: 0.06em;
+	letter-spacing: 0;
 	color: var(--aa-neutral-600);
 	border-bottom: 1px solid var(--aa-neutral-200);
 	white-space: nowrap;
@@ -307,6 +464,17 @@
 	font-size: 12px;
 	color: var(--aa-neutral-400);
 	margin-top: 1px;
+}
+
+.aardbei-col-email {
+	max-width: 240px;
+}
+
+.aardbei-col-email .aardbei-link {
+	display: block;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
 }
 
 /* Checkbox column */
@@ -346,7 +514,7 @@
 	font-size: 11px;
 	font-weight: 700;
 	text-transform: uppercase;
-	letter-spacing: 0.05em;
+	letter-spacing: 0;
 	color: var(--aa-neutral-400);
 }
 
@@ -373,7 +541,7 @@
 	padding: 3px 10px;
 	font-size: 11px;
 	font-weight: 700;
-	letter-spacing: 0.02em;
+	letter-spacing: 0;
 	white-space: nowrap;
 }
 
@@ -567,6 +735,11 @@
 .aardbei-btn--sm svg { width: 13px; height: 13px; }
 
 .aardbei-btn:disabled { opacity: .5; cursor: not-allowed; }
+
+.aardbei-btn--block {
+	width: 100%;
+	justify-content: center;
+}
 
 /* Quick actions */
 .aardbei-quick-actions {
@@ -772,7 +945,7 @@
 	font-size: 11px;
 	font-weight: 700;
 	text-transform: uppercase;
-	letter-spacing: 0.06em;
+	letter-spacing: 0;
 	color: var(--aa-neutral-600);
 }
 
@@ -1014,7 +1187,7 @@
 	font-weight: 700;
 	color: var(--aa-neutral-900);
 	text-transform: uppercase;
-	letter-spacing: 0.05em;
+	letter-spacing: 0;
 	margin: 16px 0 8px;
 }
 
@@ -1059,7 +1232,7 @@
 	font-size: 11px;
 	font-weight: 700;
 	text-transform: uppercase;
-	letter-spacing: 0.05em;
+	letter-spacing: 0;
 	color: var(--aa-neutral-400);
 	margin-bottom: 6px;
 }
@@ -1176,6 +1349,10 @@
    Responsive
    ============================================================ */
 @media (max-width: 960px) {
+	.aardbei-dashboard-overview {
+		grid-template-columns: 1fr;
+	}
+
 	.aardbei-admin-calendar-layout {
 		grid-template-columns: 1fr;
 	}
@@ -1212,6 +1389,15 @@
 		flex-direction: column;
 	}
 
+	.aardbei-quick-actions,
+	.aardbei-quick-actions .aardbei-btn {
+		width: 100%;
+	}
+
+	.aardbei-quick-actions .aardbei-btn {
+		justify-content: center;
+	}
+
 	.aardbei-today-slots {
 		flex-direction: column;
 	}
@@ -1223,5 +1409,37 @@
 	.aardbei-update-status {
 		flex-direction: column;
 		align-items: flex-start;
+	}
+}
+
+@media (max-width: 560px) {
+	.aardbei-kpi-grid,
+	.aardbei-overview-metrics {
+		grid-template-columns: 1fr;
+	}
+
+	.aardbei-overview-card-header,
+	.aardbei-overview-main,
+	.aardbei-section-header {
+		flex-direction: column;
+		align-items: flex-start;
+	}
+
+	.aardbei-overview-percent {
+		font-size: 28px;
+	}
+
+	.aardbei-today-slot {
+		align-items: flex-start;
+		flex-direction: column;
+	}
+
+	.aardbei-capacity-wrap {
+		width: 100%;
+	}
+
+	.aardbei-capacity-bar {
+		flex: 1;
+		width: auto;
 	}
 }
