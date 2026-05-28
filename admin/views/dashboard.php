@@ -15,9 +15,10 @@ $recent           = $reservations_obj->get_recent_reservations( 10 );
 $trend            = $reservations_obj->get_weekly_comparison();
 
 $slots_obj        = new Aardbei_Reserveringen_Slots();
-$today_date       = date_i18n( 'Y-m-d', current_time( 'timestamp' ) );
+$today_timestamp  = current_time( 'timestamp' );
+$today_date       = date_i18n( 'Y-m-d', $today_timestamp );
 $today_slots      = $slots_obj->get_slots( $today_date, $today_date, false );
-$today_label      = date_i18n( get_option( 'date_format' ), current_time( 'timestamp' ) );
+$today_label      = date_i18n( 'j F Y', $today_timestamp );
 
 $total_capacity     = max( 0, (int) $stats['total_capacity'] );
 $booked_persons     = max( 0, (int) $stats['booked_persons'] );
@@ -32,11 +33,13 @@ $remaining_label = sprintf(
 
 $today_summary = array(
 	'slots'        => count( $today_slots ),
+	'upcoming'     => 0,
 	'open_slots'   => 0,
 	'booked'       => 0,
 	'capacity'     => 0,
 	'full_slots'   => 0,
 	'closed_slots' => 0,
+	'expired_slots'=> 0,
 );
 
 foreach ( $today_slots as $slot ) {
@@ -44,11 +47,19 @@ foreach ( $today_slots as $slot ) {
 	$slot_booked    = max( 0, (int) $slot['booked_persons'] );
 	$slot_remaining = max( 0, (int) $slot['remaining'] );
 	$is_closed      = 'closed' === $slot['status'] || (int) $slot['manual_closed'];
+	$is_expired     = ! $slots_obj->is_slot_in_future( $slot );
 
-	$today_summary['capacity'] += $slot_capacity;
-	$today_summary['booked']   += $slot_booked;
+	if ( $is_expired ) {
+		$today_summary['expired_slots']++;
+	} else {
+		$today_summary['upcoming']++;
+		$today_summary['capacity'] += $slot_capacity;
+		$today_summary['booked']   += $slot_booked;
+	}
 
-	if ( $is_closed ) {
+	if ( $is_expired ) {
+		continue;
+	} elseif ( $is_closed ) {
 		$today_summary['closed_slots']++;
 	} elseif ( $slot_remaining <= 0 && $slot_capacity > 0 ) {
 		$today_summary['full_slots']++;
@@ -60,15 +71,15 @@ foreach ( $today_slots as $slot ) {
 $today_occupancy_pct = $today_summary['capacity'] > 0 ? min( 100, round( $today_summary['booked'] / $today_summary['capacity'] * 100 ) ) : 0;
 $today_slots_label   = sprintf(
 	/* translators: %s: amount of slots. */
-	_n( '%s tijdslot', '%s tijdsloten', $today_summary['slots'], 'aardbei-reserveringen' ),
-	number_format_i18n( $today_summary['slots'] )
+	_n( '%s aankomend tijdslot', '%s aankomende tijdsloten', $today_summary['upcoming'], 'aardbei-reserveringen' ),
+	number_format_i18n( $today_summary['upcoming'] )
 );
 
 $range_label = sprintf(
 	/* translators: 1: start date, 2: end date. */
 	__( 'Boekbare periode: %1$s – %2$s', 'aardbei-reserveringen' ),
-	date_i18n( get_option( 'date_format' ), strtotime( $stats['range']['start'] ) ),
-	date_i18n( get_option( 'date_format' ), strtotime( $stats['range']['end'] ) )
+	date_i18n( 'j F Y', strtotime( $stats['range']['start'] ) ),
+	date_i18n( 'j F Y', strtotime( $stats['range']['end'] ) )
 );
 
 $kpi_cards = array(
@@ -206,11 +217,12 @@ $kpi_cards = array(
 			</div>
 
 			<?php if ( ! empty( $today_slots ) ) : ?>
+				<?php if ( $today_summary['upcoming'] > 0 ) : ?>
 				<p class="aardbei-overview-subtitle">
 					<?php
 					printf(
 						/* translators: 1: booked persons today, 2: today's capacity. */
-						esc_html__( '%1$s van %2$s plekken voor vandaag bezet', 'aardbei-reserveringen' ),
+						esc_html__( '%1$s van %2$s aankomende plekken vandaag bezet', 'aardbei-reserveringen' ),
 						esc_html( number_format_i18n( $today_summary['booked'] ) ),
 						esc_html( number_format_i18n( $today_summary['capacity'] ) )
 					);
@@ -225,6 +237,9 @@ $kpi_cards = array(
 					aria-label="<?php echo esc_attr__( 'Bezetting vandaag', 'aardbei-reserveringen' ); ?>">
 					<span style="width:<?php echo esc_attr( $today_occupancy_pct ); ?>%"></span>
 				</div>
+				<?php else : ?>
+					<p class="aardbei-empty-state-copy"><?php echo esc_html__( 'Alle tijdsloten voor vandaag zijn voorbij.', 'aardbei-reserveringen' ); ?></p>
+				<?php endif; ?>
 				<div class="aardbei-overview-metrics aardbei-overview-metrics--compact">
 					<div class="aardbei-overview-metric">
 						<strong><?php echo esc_html( number_format_i18n( $today_summary['open_slots'] ) ); ?></strong>
@@ -237,6 +252,10 @@ $kpi_cards = array(
 					<div class="aardbei-overview-metric">
 						<strong><?php echo esc_html( number_format_i18n( $today_summary['closed_slots'] ) ); ?></strong>
 						<span><?php echo esc_html__( 'Gesloten', 'aardbei-reserveringen' ); ?></span>
+					</div>
+					<div class="aardbei-overview-metric">
+						<strong><?php echo esc_html( number_format_i18n( $today_summary['expired_slots'] ) ); ?></strong>
+						<span><?php echo esc_html__( 'Voorbij', 'aardbei-reserveringen' ); ?></span>
 					</div>
 				</div>
 				<a href="<?php echo esc_url( admin_url( 'admin.php?page=aardbei-reserveringen-calendar' ) ); ?>" class="aardbei-btn aardbei-btn--outline aardbei-btn--block">
@@ -264,9 +283,9 @@ $kpi_cards = array(
 				<?php
 				printf(
 					/* translators: 1: open slots, 2: total slots. */
-					esc_html__( '%1$s open van %2$s', 'aardbei-reserveringen' ),
+					esc_html__( '%1$s open van %2$s aankomend', 'aardbei-reserveringen' ),
 					esc_html( number_format_i18n( $today_summary['open_slots'] ) ),
-					esc_html( number_format_i18n( $today_summary['slots'] ) )
+					esc_html( number_format_i18n( $today_summary['upcoming'] ) )
 				);
 				?>
 			</span>
@@ -277,10 +296,14 @@ $kpi_cards = array(
 				$booked    = (int) $slot['booked_persons'];
 				$remaining = (int) $slot['remaining'];
 				$is_closed = 'closed' === $slot['status'] || (int) $slot['manual_closed'];
+				$is_expired = ! $slots_obj->is_slot_in_future( $slot );
 				$fill_pct  = min( 100, round( $booked / $capacity * 100 ) );
 				$fill_cls  = $fill_pct >= 90 ? 'high' : ( $fill_pct >= 60 ? 'medium' : '' );
 
-				if ( $is_closed ) {
+				if ( $is_expired ) {
+					$badge = 'expired';
+					$badge_label = __( 'Voorbij', 'aardbei-reserveringen' );
+				} elseif ( $is_closed ) {
 					$badge = 'closed';
 					$badge_label = __( 'Gesloten', 'aardbei-reserveringen' );
 				} elseif ( $remaining <= 0 ) {

@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Aardbei Reserveringen
  * Description: Reserveringssysteem voor aardbeien plukken met kalender, tijdsloten en capaciteit.
- * Version: 1.3.3
+ * Version: 1.3.4
  * Author: Roy Boer
  * Text Domain: aardbei-reserveringen
  *
@@ -13,7 +13,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'AARDBEI_RESERVERINGEN_VERSION', '1.3.3' );
+define( 'AARDBEI_RESERVERINGEN_VERSION', '1.3.4' );
 define( 'AARDBEI_RESERVERINGEN_DB_VERSION', '1.1.0' );
 define( 'AARDBEI_RESERVERINGEN_PLUGIN_FILE', __FILE__ );
 define( 'AARDBEI_RESERVERINGEN_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );

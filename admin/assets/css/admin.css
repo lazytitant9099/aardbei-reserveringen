@@ -27,6 +27,12 @@
 	color: var(--aa-neutral-900);
 }
 
+.aardbei-admin-wrap *,
+.aardbei-admin-wrap *::before,
+.aardbei-admin-wrap *::after {
+	box-sizing: border-box;
+}
+
 /* ---- Page header ---- */
 .aardbei-page-header {
 	display: flex;
@@ -148,6 +154,7 @@
 }
 
 .aardbei-overview-card {
+	min-width: 0;
 	background: #fff;
 	border: 1px solid var(--aa-neutral-200);
 	border-radius: var(--aa-radius);
@@ -226,7 +233,7 @@
 
 .aardbei-overview-metrics {
 	display: grid;
-	grid-template-columns: repeat(3, minmax(0, 1fr));
+	grid-template-columns: repeat(auto-fit, minmax(92px, 1fr));
 	gap: 10px;
 }
 
@@ -571,6 +578,11 @@
 	color: #744210;
 }
 
+.aardbei-status-expired {
+	background: var(--aa-neutral-100);
+	color: var(--aa-neutral-600);
+}
+
 /* ============================================================
    Alert / banner
    ============================================================ */
@@ -738,6 +750,7 @@
 
 .aardbei-btn--block {
 	width: 100%;
+	max-width: 100%;
 	justify-content: center;
 }
 
