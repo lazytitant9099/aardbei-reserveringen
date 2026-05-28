@@ -392,7 +392,7 @@ $gh_token = get_option( 'aardbei_gh_token', '' ) ? str_repeat( '•', 20 ) : '';
 				<div class="aardbei-settings-row">
 					<div class="aardbei-settings-label">
 						<?php echo esc_html__( 'GitHub gebruikersnaam', 'aardbei-reserveringen' ); ?>
-						<span class="desc"><?php echo esc_html__( 'De GitHub-gebruiker die de private repo beheert.', 'aardbei-reserveringen' ); ?></span>
+						<span class="desc"><?php echo esc_html__( 'De GitHub-gebruiker die de repo beheert.', 'aardbei-reserveringen' ); ?></span>
 					</div>
 					<div class="aardbei-settings-control">
 						<input type="text" name="gh_user" value="<?php echo esc_attr( $gh_user ); ?>" placeholder="gebruikersnaam" autocomplete="off">
@@ -412,7 +412,7 @@ $gh_token = get_option( 'aardbei_gh_token', '' ) ? str_repeat( '•', 20 ) : '';
 				<div class="aardbei-settings-row">
 					<div class="aardbei-settings-label">
 						<?php echo esc_html__( 'Personal Access Token', 'aardbei-reserveringen' ); ?>
-						<span class="desc"><?php echo esc_html__( 'Vereist voor private repos. Maak aan via GitHub → Settings → Developer settings → Tokens. Minimale scope: repo (read).', 'aardbei-reserveringen' ); ?></span>
+						<span class="desc"><?php echo esc_html__( 'Optioneel — alleen nodig voor private repos of hogere API-limieten. Maak aan via GitHub → Settings → Developer settings → Tokens. Minimale scope: repo (read).', 'aardbei-reserveringen' ); ?></span>
 					</div>
 					<div class="aardbei-settings-control">
 						<input type="password" name="gh_token" value="" placeholder="<?php echo esc_attr( $gh_token ? __( '(opgeslagen — leeglaten om ongewijzigd te laten)', 'aardbei-reserveringen' ) : 'ghp_…' ); ?>" autocomplete="new-password">

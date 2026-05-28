@@ -772,3 +772,143 @@
 		grid-template-columns: 1fr;
 	}
 }
+
+/* ---- Step indicator ---- */
+
+.aardbei-steps {
+	display: flex;
+	align-items: center;
+	list-style: none;
+	margin: 0 0 16px;
+	padding: 0;
+	gap: 0;
+}
+
+.aardbei-step {
+	display: flex;
+	align-items: center;
+	gap: 7px;
+	flex: 1;
+	position: relative;
+}
+
+.aardbei-step:not(:last-child)::after {
+	content: '';
+	flex: 1;
+	height: 2px;
+	background: var(--aardbei-border);
+	border-radius: 2px;
+	margin: 0 6px;
+	transition: background 0.2s;
+}
+
+.aardbei-step.is-done:not(:last-child)::after {
+	background: #22c55e;
+}
+
+.aardbei-step-num {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 24px;
+	height: 24px;
+	border-radius: 50%;
+	font-size: 11px;
+	font-weight: 700;
+	background: var(--aardbei-muted);
+	color: var(--aardbei-muted-foreground);
+	transition: background 0.2s, color 0.2s;
+	flex-shrink: 0;
+}
+
+.aardbei-step.is-active .aardbei-step-num {
+	background: var(--aardbei-ring, #18181b);
+	color: #fff;
+}
+
+.aardbei-step.is-done .aardbei-step-num {
+	background: #22c55e;
+	color: #fff;
+}
+
+.aardbei-step-label {
+	font-size: 11px;
+	font-weight: 500;
+	color: var(--aardbei-muted-foreground);
+	white-space: nowrap;
+	transition: color 0.2s;
+}
+
+.aardbei-step.is-active .aardbei-step-label,
+.aardbei-step.is-done .aardbei-step-label {
+	color: var(--aardbei-foreground);
+}
+
+/* ---- Capacity badge on time buttons ---- */
+
+.aardbei-time-button {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 3px;
+}
+
+.aardbei-time-remaining {
+	display: block;
+	font-size: 10px;
+	font-weight: 400;
+	color: var(--aardbei-muted-foreground);
+	line-height: 1;
+}
+
+.aardbei-time-button.is-selected .aardbei-time-remaining {
+	color: rgba(255, 255, 255, 0.7);
+}
+
+/* ---- Calendar links ---- */
+
+.aardbei-calendar-links {
+	display: flex;
+	gap: 8px;
+	flex-wrap: wrap;
+	justify-content: center;
+	margin: 16px 0 8px;
+}
+
+.aardbei-calendar-link {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	padding: 8px 14px;
+	border-radius: 7px;
+	font-size: 12px;
+	font-weight: 600;
+	text-decoration: none;
+	transition: opacity 0.15s;
+}
+
+.aardbei-calendar-link:hover {
+	opacity: 0.8;
+	text-decoration: none;
+}
+
+.aardbei-calendar-link svg {
+	width: 14px;
+	height: 14px;
+	stroke: currentColor;
+	fill: none;
+	stroke-width: 2;
+	stroke-linecap: round;
+	stroke-linejoin: round;
+	flex-shrink: 0;
+}
+
+.aardbei-calendar-link--google {
+	background: #eff6ff;
+	color: #1d4ed8;
+}
+
+.aardbei-calendar-link--ics {
+	background: var(--aardbei-muted);
+	color: var(--aardbei-foreground);
+}

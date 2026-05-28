@@ -209,6 +209,22 @@
 			}
 		}
 
+		function updateStepIndicator() {
+				var steps = widget.querySelector('[data-aardbei-steps]');
+				if (!steps) return;
+				var step = 1;
+				if (state.selectedDate && state.selectedSlotId) {
+					step = 3;
+				} else if (state.selectedDate) {
+					step = 2;
+				}
+				steps.querySelectorAll('[data-aardbei-step]').forEach(function (el) {
+					var n = parseInt(el.getAttribute('data-aardbei-step'), 10);
+					el.classList.toggle('is-active', n === step);
+					el.classList.toggle('is-done', n < step);
+				});
+			}
+
 		function updateMonthLimits() {
 			var dates = Object.keys(state.slotsByDate).sort();
 			if (!dates.length) {
@@ -292,13 +308,24 @@
 				button.type = 'button';
 				button.className = 'aardbei-time-button';
 				button.classList.toggle('is-selected', String(slot.id) === String(state.selectedSlotId));
-				button.textContent = slot.startTime;
+
+				var timeText = slot.startTime + ' – ' + slot.endTime;
+				button.textContent = timeText;
+
+				if (aardbeiFrontend.showRemainingCapacity && slot.remaining > 0) {
+					var badge = document.createElement('span');
+					badge.className = 'aardbei-time-remaining';
+					badge.textContent = slot.remaining === 1 ? 'nog 1 plek' : 'nog ' + slot.remaining + ' plekken';
+					button.appendChild(badge);
+				}
+
 				button.addEventListener('click', function () {
 					state.selectedSlotId = slot.id;
 					closePanels('');
 					updateLabels();
 					renderTimes();
 					setMessage(mainMessage, '', '');
+					updateStepIndicator();
 				});
 				timeGrid.appendChild(button);
 			});
@@ -324,6 +351,7 @@
 			state.currentMonth = monthStart(parseDateKey(dateKey));
 			state.selectedSlotId = slots.length ? slots[0].id : '';
 			render();
+			updateStepIndicator();
 		}
 
 		function selectFirstAvailableSlot() {
@@ -444,15 +472,30 @@
 				}
 				setMessage(mainMessage, '', '');
 				updateLabels();
+				var steps = widget.querySelector('[data-aardbei-steps]');
+				if (steps) {
+					steps.querySelectorAll('[data-aardbei-step]').forEach(function (el) {
+						var n = parseInt(el.getAttribute('data-aardbei-step'), 10);
+						el.classList.toggle('is-active', n === 3);
+						el.classList.toggle('is-done', n < 3);
+					});
+				}
 				if (form) {
 					form.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 				}
 			});
 		}
 
-		function showConfirmation(submittedData, slotInfo) {
-			var container = widget.querySelector('[data-aardbei-widget-inner]') || widget;
+		function buildGoogleCalendarUrl(slotInfo, title, guests) {
+			if (!slotInfo || !slotInfo.date) return '';
+			var dateStr = slotInfo.date.replace(/-/g, '');
+			var startStr = dateStr + 'T' + slotInfo.startTime.replace(':', '') + '00';
+			var endStr   = dateStr + 'T' + slotInfo.endTime.replace(':', '') + '00';
+			var text = encodeURIComponent(title + ' (' + guests + ')');
+			return 'https://calendar.google.com/calendar/r/eventedit?text=' + text + '&dates=' + startStr + '/' + endStr;
+		}
 
+		function showConfirmation(submittedData, slotInfo, reservationId) {
 			var dateLabel = slotInfo ? formatDateLabel(slotInfo.date) : '';
 			var timeLabel = slotInfo ? (slotInfo.startTime + ' – ' + slotInfo.endTime) : '';
 			var guestText = state.persons === 1 ? '1 gast' : state.persons + ' gasten';
@@ -462,6 +505,13 @@
 				+ '<h3>Reservering bevestigd!</h3>'
 				+ '<p>Je ontvangt een bevestiging op <strong>' + escapeHtml(submittedData.email || '') + '</strong></p>'
 				+ '<div class="aardbei-confirmation-details">';
+
+			if (reservationId) {
+				html += '<div class="aardbei-confirmation-row">'
+					+ '<span class="aardbei-confirmation-row-label">Reserveringsnr.</span>'
+					+ '<span class="aardbei-confirmation-row-value"><strong>#' + escapeHtml(String(reservationId)) + '</strong></span>'
+					+ '</div>';
+			}
 
 			if (dateLabel) {
 				html += '<div class="aardbei-confirmation-row">'
@@ -489,8 +539,28 @@
 					+ '</div>';
 			}
 
-			html += '</div>'
-				+ '<button type="button" class="aardbei-reset-button" data-aardbei-reset>Nieuwe reservering maken</button>'
+			html += '</div>';
+
+			var gcalUrl = buildGoogleCalendarUrl(slotInfo, 'Aardbeien plukken', guestText);
+			if (gcalUrl || reservationId) {
+				html += '<div class="aardbei-calendar-links">';
+				if (gcalUrl) {
+					html += '<a href="' + gcalUrl + '" target="_blank" rel="noopener noreferrer" class="aardbei-calendar-link aardbei-calendar-link--google">'
+						+ '<svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>'
+						+ escapeHtml((aardbeiFrontend.i18n && aardbeiFrontend.i18n.googleCalendar) || 'Google Agenda')
+						+ '</a>';
+				}
+				if (reservationId) {
+					var icsUrl = aardbeiFrontend.ajaxUrl + '?action=aardbei_download_ics&reservation_id=' + encodeURIComponent(reservationId) + '&nonce=' + encodeURIComponent(aardbeiFrontend.nonce);
+					html += '<a href="' + icsUrl + '" class="aardbei-calendar-link aardbei-calendar-link--ics">'
+						+ '<svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>'
+						+ escapeHtml((aardbeiFrontend.i18n && aardbeiFrontend.i18n.downloadIcs) || 'iCal (.ics)')
+						+ '</a>';
+				}
+				html += '</div>';
+			}
+
+			html += '<button type="button" class="aardbei-reset-button" data-aardbei-reset>Nieuwe reservering maken</button>'
 				+ '</div>';
 
 			var confirmEl = document.createElement('div');
@@ -521,6 +591,7 @@
 						form.hidden = true;
 					}
 					setMessage(mainMessage, '', '');
+					updateStepIndicator();
 					fetchSlots(true);
 				});
 			}
@@ -559,10 +630,11 @@
 					}
 
 					var slotInfo = getSelectedSlot();
+					var reservationId = json.data && json.data.reservation_id ? json.data.reservation_id : null;
 					form.hidden = true;
 					setMessage(formMessage, '', '');
 					setMessage(mainMessage, '', '');
-					showConfirmation(submittedData, slotInfo);
+					showConfirmation(submittedData, slotInfo, reservationId);
 					fetchSlots(true);
 				}).catch(function () {
 					setMessage(formMessage, 'Reserveren is niet gelukt. Probeer het opnieuw.', 'error');

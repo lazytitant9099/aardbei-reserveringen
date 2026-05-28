@@ -26,18 +26,60 @@ class Aardbei_Reserveringen_Mailer {
 			return false;
 		}
 
-		$subject = Aardbei_Reserveringen_Settings::get_setting( 'customer_mail_subject', __( 'Je reservering voor aardbeien plukken', 'aardbei-reserveringen' ) );
-		$message = sprintf(
-			"Hallo %s,\n\nBedankt voor je reservering om aardbeien te komen plukken.\n\nDatum: %s\nTijd: %s - %s\nAantal personen: %d\n\nBetaling vindt plaats op locatie.\n\nWil je annuleren? Gebruik dan deze link:\n%s\n\nTot snel!",
-			$reservation['name'],
-			$this->format_date( $reservation['date'] ),
-			$this->format_time( $reservation['start_time'] ),
-			$this->format_time( $reservation['end_time'] ),
-			(int) $reservation['persons'],
-			$this->get_cancel_url( $reservation['cancel_token'] )
+		$subject    = Aardbei_Reserveringen_Settings::get_setting( 'customer_mail_subject', __( 'Je reservering voor aardbeien plukken', 'aardbei-reserveringen' ) );
+		$cancel_url = $this->get_cancel_url( $reservation['cancel_token'] );
+		$site_name  = get_bloginfo( 'name' );
+
+		$rows = array(
+			array( __( 'Reserveringsnr.', 'aardbei-reserveringen' ), '#' . absint( $reservation_id ) ),
+			array( __( 'Datum', 'aardbei-reserveringen' ), $this->format_date( $reservation['date'] ) ),
+			array( __( 'Tijd', 'aardbei-reserveringen' ), $this->format_time( $reservation['start_time'] ) . ' – ' . $this->format_time( $reservation['end_time'] ) ),
+			array( __( 'Personen', 'aardbei-reserveringen' ), (int) $reservation['persons'] ),
+			array( __( 'Naam', 'aardbei-reserveringen' ), $reservation['name'] ),
 		);
 
-		return wp_mail( $reservation['email'], $subject, $message );
+		$rows_html = '';
+		foreach ( $rows as $row ) {
+			$rows_html .= '<tr>'
+				. '<td style="padding:8px 16px;color:#64748b;font-size:13px;white-space:nowrap;border-bottom:1px solid #f1f5f9;">' . esc_html( $row[0] ) . '</td>'
+				. '<td style="padding:8px 16px;font-size:13px;font-weight:600;border-bottom:1px solid #f1f5f9;">' . esc_html( $row[1] ) . '</td>'
+				. '</tr>';
+		}
+
+		$message = '<!DOCTYPE html><html><head><meta charset="UTF-8"></head><body style="margin:0;padding:0;background:#f8fafc;font-family:system-ui,-apple-system,sans-serif;">'
+			. '<table width="100%" cellpadding="0" cellspacing="0" style="background:#f8fafc;padding:32px 0;">'
+			. '<tr><td align="center">'
+			. '<table width="520" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:12px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.08);">'
+			. '<tr><td style="background:#171717;padding:24px 32px;">'
+			. '<p style="margin:0;font-size:20px;font-weight:700;color:#ffffff;">' . esc_html( $site_name ) . '</p>'
+			. '</td></tr>'
+			. '<tr><td style="padding:32px 32px 8px;">'
+			. '<h1 style="margin:0 0 8px;font-size:22px;font-weight:700;color:#0f172a;">' . esc_html__( 'Reservering bevestigd!', 'aardbei-reserveringen' ) . '</h1>'
+			. '<p style="margin:0;color:#475569;font-size:14px;">' . sprintf( esc_html__( 'Hallo %s, je pluktijd staat ingepland.', 'aardbei-reserveringen' ), esc_html( $reservation['name'] ) ) . '</p>'
+			. '</td></tr>'
+			. '<tr><td style="padding:16px 32px;">'
+			. '<table width="100%" cellpadding="0" cellspacing="0" style="border:1px solid #e2e8f0;border-radius:8px;overflow:hidden;">'
+			. $rows_html
+			. '</table>'
+			. '</td></tr>'
+			. '<tr><td style="padding:8px 32px 32px;">'
+			. '<p style="margin:0 0 16px;color:#475569;font-size:13px;">' . esc_html__( 'Betaling vindt plaats op locatie.', 'aardbei-reserveringen' ) . '</p>'
+			. '<a href="' . esc_url( $cancel_url ) . '" style="display:inline-block;padding:10px 20px;background:#fee2e2;color:#991b1b;font-size:13px;font-weight:600;border-radius:6px;text-decoration:none;">'
+			. esc_html__( 'Reservering annuleren', 'aardbei-reserveringen' )
+			. '</a>'
+			. '</td></tr>'
+			. '<tr><td style="padding:16px 32px;background:#f8fafc;border-top:1px solid #e2e8f0;">'
+			. '<p style="margin:0;font-size:11px;color:#94a3b8;">' . esc_html( $site_name ) . '</p>'
+			. '</td></tr>'
+			. '</table>'
+			. '</td></tr></table>'
+			. '</body></html>';
+
+		add_filter( 'wp_mail_content_type', array( $this, 'set_html_content_type' ) );
+		$result = wp_mail( $reservation['email'], $subject, $message );
+		remove_filter( 'wp_mail_content_type', array( $this, 'set_html_content_type' ) );
+
+		return $result;
 	}
 
 	/**
@@ -54,19 +96,40 @@ class Aardbei_Reserveringen_Mailer {
 
 		$to      = Aardbei_Reserveringen_Settings::get_setting( 'admin_email', get_option( 'admin_email' ) );
 		$subject = Aardbei_Reserveringen_Settings::get_setting( 'admin_mail_subject', __( 'Nieuwe reservering voor aardbeien plukken', 'aardbei-reserveringen' ) );
-		$message = sprintf(
-			"Nieuwe reservering:\n\nDatum: %s\nTijd: %s - %s\nNaam: %s\nE-mail: %s\nTelefoon: %s\nPersonen: %d\nOpmerking: %s",
-			$this->format_date( $reservation['date'] ),
-			$this->format_time( $reservation['start_time'] ),
-			$this->format_time( $reservation['end_time'] ),
-			$reservation['name'],
-			$reservation['email'],
-			$reservation['phone'],
-			(int) $reservation['persons'],
-			$reservation['note']
+
+		$rows = array(
+			array( 'Reserveringsnr.', '#' . absint( $reservation_id ) ),
+			array( 'Datum', $this->format_date( $reservation['date'] ) ),
+			array( 'Tijd', $this->format_time( $reservation['start_time'] ) . ' – ' . $this->format_time( $reservation['end_time'] ) ),
+			array( 'Naam', $reservation['name'] ),
+			array( 'E-mail', $reservation['email'] ),
+			array( 'Telefoon', $reservation['phone'] ),
+			array( 'Personen', (int) $reservation['persons'] ),
+			array( 'Opmerking', $reservation['note'] ?: '—' ),
 		);
 
-		return wp_mail( $to, $subject, $message );
+		$rows_html = '';
+		foreach ( $rows as $row ) {
+			$rows_html .= '<tr>'
+				. '<td style="padding:6px 12px;color:#64748b;font-size:13px;white-space:nowrap;border-bottom:1px solid #f1f5f9;">' . esc_html( $row[0] ) . '</td>'
+				. '<td style="padding:6px 12px;font-size:13px;border-bottom:1px solid #f1f5f9;">' . esc_html( $row[1] ) . '</td>'
+				. '</tr>';
+		}
+
+		$message = '<!DOCTYPE html><html><head><meta charset="UTF-8"></head><body style="font-family:system-ui,sans-serif;padding:24px;background:#f8fafc;">'
+			. '<div style="max-width:480px;background:#fff;border-radius:8px;padding:24px;box-shadow:0 1px 3px rgba(0,0,0,.08);">'
+			. '<h2 style="margin:0 0 16px;font-size:17px;color:#0f172a;">' . esc_html__( 'Nieuwe reservering', 'aardbei-reserveringen' ) . '</h2>'
+			. '<table width="100%" cellpadding="0" cellspacing="0" style="border:1px solid #e2e8f0;border-radius:6px;overflow:hidden;">'
+			. $rows_html
+			. '</table>'
+			. '</div>'
+			. '</body></html>';
+
+		add_filter( 'wp_mail_content_type', array( $this, 'set_html_content_type' ) );
+		$result = wp_mail( $to, $subject, $message );
+		remove_filter( 'wp_mail_content_type', array( $this, 'set_html_content_type' ) );
+
+		return $result;
 	}
 
 	/**
@@ -84,7 +147,8 @@ class Aardbei_Reserveringen_Mailer {
 		$to      = Aardbei_Reserveringen_Settings::get_setting( 'admin_email', get_option( 'admin_email' ) );
 		$subject = __( 'Reservering geannuleerd', 'aardbei-reserveringen' );
 		$message = sprintf(
-			"Een reservering is geannuleerd:\n\nDatum: %s\nTijd: %s - %s\nNaam: %s\nE-mail: %s\nPersonen: %d",
+			"Reservering geannuleerd:\n\nNr.: #%d\nDatum: %s\nTijd: %s – %s\nNaam: %s\nE-mail: %s\nPersonen: %d",
+			absint( $reservation_id ),
 			$this->format_date( $reservation['date'] ),
 			$this->format_time( $reservation['start_time'] ),
 			$this->format_time( $reservation['end_time'] ),
@@ -94,6 +158,15 @@ class Aardbei_Reserveringen_Mailer {
 		);
 
 		return wp_mail( $to, $subject, $message );
+	}
+
+	/**
+	 * HTML content-type filter callback.
+	 *
+	 * @return string
+	 */
+	public function set_html_content_type() {
+		return 'text/html';
 	}
 
 	/**

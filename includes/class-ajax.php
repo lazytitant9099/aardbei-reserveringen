@@ -30,6 +30,8 @@ class Aardbei_Reserveringen_Ajax {
 		add_action( 'wp_ajax_aardbei_cancel_reservation', array( $this, 'admin_cancel_reservation' ) );
 		add_action( 'wp_ajax_aardbei_bulk_cancel_reservations', array( $this, 'bulk_cancel_reservations' ) );
 		add_action( 'wp_ajax_aardbei_check_for_update', array( $this, 'check_for_update' ) );
+		add_action( 'wp_ajax_aardbei_download_ics', array( $this, 'download_ics' ) );
+		add_action( 'wp_ajax_nopriv_aardbei_download_ics', array( $this, 'download_ics' ) );
 	}
 
 	/**
@@ -262,6 +264,77 @@ class Aardbei_Reserveringen_Ajax {
 
 		$status = $aardbei_updater->check_now();
 		wp_send_json_success( $status );
+	}
+
+	/**
+	 * ICS kalenderbestand downloaden.
+	 */
+	public function download_ics() {
+		if ( ! check_ajax_referer( 'aardbei_frontend_nonce', 'nonce', false ) ) {
+			wp_die( esc_html__( 'Ongeldige beveiligingscontrole.', 'aardbei-reserveringen' ), 403 );
+		}
+
+		$reservation_id = isset( $_GET['reservation_id'] ) ? absint( wp_unslash( $_GET['reservation_id'] ) ) : 0;
+		if ( ! $reservation_id ) {
+			wp_die( esc_html__( 'Ongeldige reservering.', 'aardbei-reserveringen' ), 400 );
+		}
+
+		global $wpdb;
+		$reservations_table = Aardbei_Reserveringen_Database::get_reservations_table();
+		$slots_table        = Aardbei_Reserveringen_Database::get_slots_table();
+
+		$reservation = $wpdb->get_row(
+			$wpdb->prepare(
+				"SELECT r.name, r.email, r.persons, r.cancel_token, s.date, s.start_time, s.end_time
+				FROM {$reservations_table} r
+				INNER JOIN {$slots_table} s ON s.id = r.slot_id
+				WHERE r.id = %d AND r.status = 'confirmed'",
+				$reservation_id
+			),
+			ARRAY_A
+		);
+
+		if ( ! $reservation ) {
+			wp_die( esc_html__( 'Reservering niet gevonden.', 'aardbei-reserveringen' ), 404 );
+		}
+
+		$site_name  = get_bloginfo( 'name' );
+		$dtstart    = str_replace( '-', '', $reservation['date'] ) . 'T' . str_replace( ':', '', substr( $reservation['start_time'], 0, 5 ) ) . '00';
+		$dtend      = str_replace( '-', '', $reservation['date'] ) . 'T' . str_replace( ':', '', substr( $reservation['end_time'], 0, 5 ) ) . '00';
+		$dtstamp    = gmdate( 'Ymd\THis\Z' );
+		$summary    = sprintf( 'Aardbeien plukken – %s (%d personen)', $site_name, (int) $reservation['persons'] );
+		$cancel_url = add_query_arg( array( 'aardbei_cancel' => 1, 'token' => $reservation['cancel_token'] ), home_url( '/' ) );
+
+		$ics = "BEGIN:VCALENDAR\r\n"
+			. "VERSION:2.0\r\n"
+			. "PRODID:-//Aardbei Reserveringen//NL\r\n"
+			. "CALSCALE:GREGORIAN\r\n"
+			. "METHOD:PUBLISH\r\n"
+			. "BEGIN:VEVENT\r\n"
+			. "UID:aardbei-{$reservation_id}@" . wp_parse_url( home_url(), PHP_URL_HOST ) . "\r\n"
+			. "DTSTAMP:{$dtstamp}\r\n"
+			. "DTSTART:{$dtstart}\r\n"
+			. "DTEND:{$dtend}\r\n"
+			. "SUMMARY:" . $this->ics_escape( $summary ) . "\r\n"
+			. "DESCRIPTION:" . $this->ics_escape( sprintf( __( 'Annuleerlink: %s', 'aardbei-reserveringen' ), $cancel_url ) ) . "\r\n"
+			. "END:VEVENT\r\n"
+			. "END:VCALENDAR\r\n";
+
+		header( 'Content-Type: text/calendar; charset=UTF-8' );
+		header( 'Content-Disposition: attachment; filename="reservering-' . $reservation_id . '.ics"' );
+		header( 'Cache-Control: no-cache, no-store, must-revalidate' );
+		echo $ics; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+		exit;
+	}
+
+	/**
+	 * Escape voor ICS-velden.
+	 *
+	 * @param string $value Waarde.
+	 * @return string
+	 */
+	private function ics_escape( $value ) {
+		return str_replace( array( '\\', "\n", ';', ',' ), array( '\\\\', '\\n', '\\;', '\\,' ), $value );
 	}
 
 	/**

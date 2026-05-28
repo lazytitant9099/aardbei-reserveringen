@@ -213,13 +213,17 @@ class Aardbei_Reserveringen_Frontend {
 			'aardbei-frontend-calendar',
 			'aardbeiFrontend',
 			array(
-				'ajaxUrl' => admin_url( 'admin-ajax.php' ),
-				'nonce'   => wp_create_nonce( 'aardbei_frontend_nonce' ),
-				'i18n'    => array(
+				'ajaxUrl'               => admin_url( 'admin-ajax.php' ),
+				'nonce'                 => wp_create_nonce( 'aardbei_frontend_nonce' ),
+				'showRemainingCapacity' => (bool) Aardbei_Reserveringen_Settings::get_setting( 'show_remaining_capacity', 1 ),
+				'i18n'                  => array(
 					'chooseSlot'      => __( 'Kies eerst een pluktijd.', 'aardbei-reserveringen' ),
 					'loadingError'    => __( 'De kalender kon niet worden geladen.', 'aardbei-reserveringen' ),
 					'noSlots'         => __( 'Er zijn op dit moment geen pluktijden beschikbaar. Nieuwe tijden komen binnenkort online.', 'aardbei-reserveringen' ),
 					'reservationDone' => __( 'Je reservering is ontvangen. Je ontvangt zo een bevestiging per e-mail.', 'aardbei-reserveringen' ),
+					'addToCalendar'   => __( 'Toevoegen aan agenda', 'aardbei-reserveringen' ),
+					'googleCalendar'  => __( 'Google Agenda', 'aardbei-reserveringen' ),
+					'downloadIcs'     => __( 'iCal / Apple Agenda (.ics)', 'aardbei-reserveringen' ),
 				),
 			)
 		);
@@ -274,6 +278,12 @@ class Aardbei_Reserveringen_Frontend {
 					<h2><?php echo esc_html( $title ); ?></h2>
 				</div>
 			<?php endif; ?>
+
+			<ol class="aardbei-steps" aria-label="<?php echo esc_attr__( 'Reserveringsstappen', 'aardbei-reserveringen' ); ?>" data-aardbei-steps>
+				<li class="aardbei-step is-active" data-aardbei-step="1"><span class="aardbei-step-num">1</span><span class="aardbei-step-label"><?php echo esc_html__( 'Gasten', 'aardbei-reserveringen' ); ?></span></li>
+				<li class="aardbei-step" data-aardbei-step="2"><span class="aardbei-step-num">2</span><span class="aardbei-step-label"><?php echo esc_html__( 'Datum & Tijd', 'aardbei-reserveringen' ); ?></span></li>
+				<li class="aardbei-step" data-aardbei-step="3"><span class="aardbei-step-num">3</span><span class="aardbei-step-label"><?php echo esc_html__( 'Gegevens', 'aardbei-reserveringen' ); ?></span></li>
+			</ol>
 
 			<div class="aardbei-booking-selectors">
 				<button type="button" class="aardbei-selector-row" data-aardbei-panel-toggle="guests">
