@@ -1,0 +1,37 @@
+name: Release Plugin
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Get tag name
+        id: tag
+        run: echo "tag=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+
+      - name: Build plugin ZIP
+        run: |
+          cd "$GITHUB_WORKSPACE/.."
+          zip -r aardbei-reserveringen.zip aardbei-reserveringen \
+            --exclude "aardbei-reserveringen/.git/*" \
+            --exclude "aardbei-reserveringen/.github/*" \
+            --exclude "aardbei-reserveringen/.DS_Store" \
+            --exclude "aardbei-reserveringen/*.log"
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.tag.outputs.tag }}
+          name: "Aardbei Reserveringen ${{ steps.tag.outputs.tag }}"
+          generate_release_notes: true
+          files: ${{ github.workspace }}/../aardbei-reserveringen.zip
