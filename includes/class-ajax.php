@@ -29,6 +29,7 @@ class Aardbei_Reserveringen_Ajax {
 		add_action( 'wp_ajax_aardbei_admin_open_slot', array( $this, 'admin_open_slot' ) );
 		add_action( 'wp_ajax_aardbei_cancel_reservation', array( $this, 'admin_cancel_reservation' ) );
 		add_action( 'wp_ajax_aardbei_bulk_cancel_reservations', array( $this, 'bulk_cancel_reservations' ) );
+		add_action( 'wp_ajax_aardbei_bulk_delete_slots', array( $this, 'bulk_delete_slots' ) );
 		add_action( 'wp_ajax_aardbei_check_for_update', array( $this, 'check_for_update' ) );
 		add_action( 'wp_ajax_aardbei_download_ics', array( $this, 'download_ics' ) );
 		add_action( 'wp_ajax_nopriv_aardbei_download_ics', array( $this, 'download_ics' ) );
@@ -252,6 +253,54 @@ class Aardbei_Reserveringen_Ajax {
 				'cancelled' => $cancelled,
 				/* translators: %d: aantal geannuleerde reserveringen. */
 				'message'   => sprintf( __( '%d reservering(en) geannuleerd.', 'aardbei-reserveringen' ), $cancelled ),
+			)
+		);
+	}
+
+	/**
+	 * Bulk verwijderen van tijdsloten via AJAX.
+	 */
+	public function bulk_delete_slots() {
+		$this->verify_admin_ajax();
+
+		$ids = isset( $_POST['ids'] ) ? array_map( 'absint', (array) wp_unslash( $_POST['ids'] ) ) : array();
+
+		if ( empty( $ids ) ) {
+			wp_send_json_error( array( 'message' => __( 'Geen tijdsloten geselecteerd.', 'aardbei-reserveringen' ) ), 400 );
+		}
+
+		$slots   = new Aardbei_Reserveringen_Slots();
+		$deleted = 0;
+		$skipped = 0;
+
+		foreach ( $ids as $id ) {
+			$result = $slots->delete_slot( $id );
+			if ( is_wp_error( $result ) || ! $result ) {
+				$skipped++;
+			} else {
+				$deleted++;
+			}
+		}
+
+		$message = sprintf(
+			/* translators: %d: aantal verwijderde tijdsloten. */
+			__( '%d tijdslot(en) verwijderd.', 'aardbei-reserveringen' ),
+			$deleted
+		);
+
+		if ( $skipped > 0 ) {
+			$message .= ' ' . sprintf(
+				/* translators: %d: aantal overgeslagen tijdsloten. */
+				__( '%d overgeslagen (actieve reserveringen).', 'aardbei-reserveringen' ),
+				$skipped
+			);
+		}
+
+		wp_send_json_success(
+			array(
+				'deleted' => $deleted,
+				'skipped' => $skipped,
+				'message' => $message,
 			)
 		);
 	}

@@ -89,8 +89,13 @@
 	function initConfirmForms() {
 		document.querySelectorAll('.aardbei-admin-wrap form').forEach(function (form) {
 			form.addEventListener('submit', function (event) {
-				var destructive = form.querySelector('.link-delete, [name="action"][value="aardbei_delete_week_template"], [name="action"][value="aardbei_cancel_reservation"]');
-				if (destructive && !window.confirm(i18n.confirmCancel || 'Weet je zeker?')) {
+				var cancelDestructive = form.querySelector('.link-delete, [name="action"][value="aardbei_delete_week_template"], [name="action"][value="aardbei_cancel_reservation"]');
+				if (cancelDestructive && !window.confirm(i18n.confirmCancel || 'Weet je zeker?')) {
+					event.preventDefault();
+					return;
+				}
+				var deleteSlot = form.querySelector('[name="action"][value="aardbei_delete_slot"]');
+				if (deleteSlot && !window.confirm(i18n.confirmDeleteSlot || 'Weet je zeker dat je dit tijdslot wilt verwijderen?')) {
 					event.preventDefault();
 				}
 			});
@@ -381,6 +386,89 @@
 		});
 	}
 
+	/* ---- Slot bulk delete ---- */
+
+	function initSlotBulkDelete() {
+		var bar = document.getElementById('aardbei-slots-bulk-bar');
+		var countEl = document.getElementById('aardbei-slots-bulk-count');
+		var deleteBtn = document.getElementById('aardbei-slots-bulk-delete');
+		var deselectBtn = document.getElementById('aardbei-slots-bulk-deselect');
+		var selectAll = document.getElementById('aardbei-slots-select-all');
+
+		if (!bar) return;
+
+		function getCheckedSlotIds() {
+			return Array.from(document.querySelectorAll('.aardbei-slot-check:checked')).map(function (cb) { return cb.value; });
+		}
+
+		function updateSlotBulkBar() {
+			var ids = getCheckedSlotIds();
+			var count = ids.length;
+			bar.hidden = count === 0;
+			if (countEl) countEl.textContent = count + ' geselecteerd';
+
+			if (selectAll) {
+				var all = document.querySelectorAll('.aardbei-slot-check:not(:disabled)');
+				selectAll.checked = all.length > 0 && all.length === count;
+				selectAll.indeterminate = count > 0 && count < all.length;
+			}
+		}
+
+		document.addEventListener('change', function (e) {
+			if (e.target.classList.contains('aardbei-slot-check')) {
+				updateSlotBulkBar();
+			}
+		});
+
+		if (selectAll) {
+			selectAll.addEventListener('change', function () {
+				document.querySelectorAll('.aardbei-slot-check:not(:disabled)').forEach(function (cb) {
+					cb.checked = selectAll.checked;
+				});
+				updateSlotBulkBar();
+			});
+		}
+
+		if (deselectBtn) {
+			deselectBtn.addEventListener('click', function () {
+				document.querySelectorAll('.aardbei-slot-check').forEach(function (cb) { cb.checked = false; });
+				if (selectAll) { selectAll.checked = false; selectAll.indeterminate = false; }
+				updateSlotBulkBar();
+			});
+		}
+
+		if (deleteBtn) {
+			deleteBtn.addEventListener('click', function () {
+				var ids = getCheckedSlotIds();
+				if (!ids.length) return;
+
+				if (!window.confirm((i18n.confirmBulkDeleteSlots || 'Weet je zeker dat je de geselecteerde tijdsloten wilt verwijderen?') + ' (' + ids.length + ')')) return;
+
+				deleteBtn.disabled = true;
+
+				adminPost('aardbei_bulk_delete_slots', { ids: ids }).then(function (json) {
+					deleteBtn.disabled = false;
+					if (!json.success) {
+						showToast((json.data && json.data.message) || i18n.error || 'Fout opgetreden.', 'error');
+						return;
+					}
+					showToast(json.data.message || (i18n.deleted || 'Verwijderd'), 'success');
+
+					ids.forEach(function (id) {
+						var row = document.querySelector('tr[data-slot-id="' + id + '"]');
+						if (row) row.parentNode.removeChild(row);
+					});
+
+					document.querySelectorAll('.aardbei-slot-check:checked').forEach(function (cb) { cb.checked = false; });
+					updateSlotBulkBar();
+				}).catch(function () {
+					deleteBtn.disabled = false;
+					showToast(i18n.error || 'Fout opgetreden.', 'error');
+				});
+			});
+		}
+	}
+
 	/* ---- Init ---- */
 
 	document.addEventListener('DOMContentLoaded', function () {
@@ -393,5 +481,6 @@
 		initTabs();
 		initColorPreview();
 		initCheckUpdates();
+		initSlotBulkDelete();
 	});
 }());

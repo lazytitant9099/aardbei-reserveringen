@@ -311,6 +311,34 @@ class Aardbei_Reserveringen_Slots {
 	}
 
 	/**
+	 * Verwijder een tijdslot (alleen als er geen actieve reserveringen zijn).
+	 *
+	 * @param int $slot_id Slot ID.
+	 * @return bool|WP_Error
+	 */
+	public function delete_slot( $slot_id ) {
+		global $wpdb;
+
+		$slot_id = absint( $slot_id );
+		if ( ! $slot_id ) {
+			return new WP_Error( 'invalid_id', __( 'Ongeldig slot ID.', 'aardbei-reserveringen' ) );
+		}
+
+		$info = $this->get_slot_capacity_info( $slot_id );
+		if ( ! $info ) {
+			return new WP_Error( 'slot_not_found', __( 'Tijdslot niet gevonden.', 'aardbei-reserveringen' ) );
+		}
+
+		if ( (int) $info['booked_persons'] > 0 ) {
+			return new WP_Error( 'slot_has_reservations', __( 'Dit tijdslot heeft actieve reserveringen en kan niet worden verwijderd.', 'aardbei-reserveringen' ) );
+		}
+
+		$table = Aardbei_Reserveringen_Database::get_slots_table();
+
+		return false !== $wpdb->delete( $table, array( 'id' => $slot_id ), array( '%d' ) );
+	}
+
+	/**
 	 * Genereer slots voor de huidige boekbare periode.
 	 *
 	 * @return int Aantal nieuw aangemaakte slots.

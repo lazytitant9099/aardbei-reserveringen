@@ -32,6 +32,7 @@ class Aardbei_Reserveringen_Admin {
 		add_action( 'admin_post_aardbei_close_slot', array( $this, 'handle_close_slot' ) );
 		add_action( 'admin_post_aardbei_open_slot', array( $this, 'handle_open_slot' ) );
 		add_action( 'admin_post_aardbei_cancel_reservation', array( $this, 'handle_cancel_reservation' ) );
+		add_action( 'admin_post_aardbei_delete_slot', array( $this, 'handle_delete_slot' ) );
 	}
 
 	/**
@@ -142,8 +143,11 @@ class Aardbei_Reserveringen_Admin {
 					'error'            => __( 'Er ging iets mis. Probeer opnieuw.', 'aardbei-reserveringen' ),
 					'checking'         => __( 'Controleren…', 'aardbei-reserveringen' ),
 					'checkNow'         => __( 'Nu controleren', 'aardbei-reserveringen' ),
-					'selectAll'        => __( 'Alles selecteren', 'aardbei-reserveringen' ),
-					'bulkCancel'       => __( 'Annuleer geselecteerde', 'aardbei-reserveringen' ),
+					'selectAll'              => __( 'Alles selecteren', 'aardbei-reserveringen' ),
+					'bulkCancel'             => __( 'Annuleer geselecteerde', 'aardbei-reserveringen' ),
+					'confirmDeleteSlot'      => __( 'Weet je zeker dat je dit tijdslot wilt verwijderen?', 'aardbei-reserveringen' ),
+					'confirmBulkDeleteSlots' => __( 'Weet je zeker dat je de geselecteerde tijdsloten wilt verwijderen?', 'aardbei-reserveringen' ),
+					'deleted'                => __( 'Verwijderd', 'aardbei-reserveringen' ),
 				),
 			)
 		);
@@ -404,6 +408,23 @@ class Aardbei_Reserveringen_Admin {
 		$slots->open_slot( $slot_id );
 
 		$this->redirect( 'aardbei-reserveringen-slots', 'updated', __( 'Tijdslot geopend.', 'aardbei-reserveringen' ) );
+	}
+
+	/**
+	 * Verwijder tijdslot.
+	 */
+	public function handle_delete_slot() {
+		$slot_id = isset( $_REQUEST['slot_id'] ) ? absint( wp_unslash( $_REQUEST['slot_id'] ) ) : 0;
+		$this->verify_admin_action( 'aardbei_delete_slot_' . $slot_id );
+
+		$slots  = new Aardbei_Reserveringen_Slots();
+		$result = $slots->delete_slot( $slot_id );
+
+		if ( is_wp_error( $result ) ) {
+			$this->redirect( 'aardbei-reserveringen-slots', 'error', $result->get_error_message() );
+		}
+
+		$this->redirect( 'aardbei-reserveringen-slots', 'updated', __( 'Tijdslot verwijderd.', 'aardbei-reserveringen' ) );
 	}
 
 	/**
