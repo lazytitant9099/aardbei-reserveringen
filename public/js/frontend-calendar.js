@@ -157,7 +157,7 @@
 
 		function getSelectedSlot() {
 			return state.slots.find(function (slot) {
-				return String(slot.id) === String(state.selectedSlotId);
+				return String(slot.id) === String(state.selectedSlotId) && isSlotAvailable(slot);
 			}) || null;
 		}
 
@@ -165,6 +165,22 @@
 			return slots.slice().sort(function (a, b) {
 				return a.startTime.localeCompare(b.startTime);
 			});
+		}
+
+		function isSlotAvailable(slot) {
+			return Number(slot.remaining || 0) >= state.persons;
+		}
+
+		function getAvailableSlots(dateKey) {
+			var slots = dateKey ? state.slotsByDate[dateKey] || [] : state.slots;
+
+			return sortSlots(slots.filter(isSlotAvailable));
+		}
+
+		function getAvailableDates() {
+			return Object.keys(state.slotsByDate).filter(function (dateKey) {
+				return getAvailableSlots(dateKey).length > 0;
+			}).sort();
 		}
 
 		function groupSlots(slots) {
@@ -206,6 +222,9 @@
 			if (selectedSlot && slot) {
 				selectedSlot.hidden = false;
 				selectedSlot.textContent = guestText + ' · ' + formatDateLabel(slot.date) + ' · ' + slot.startTime + ' - ' + slot.endTime;
+			} else if (selectedSlot) {
+				selectedSlot.hidden = true;
+				selectedSlot.textContent = '';
 			}
 		}
 
@@ -226,7 +245,7 @@
 			}
 
 		function updateMonthLimits() {
-			var dates = Object.keys(state.slotsByDate).sort();
+			var dates = getAvailableDates();
 			if (!dates.length) {
 				state.minMonth = monthStart(new Date());
 				state.maxMonth = monthStart(new Date());
@@ -266,7 +285,7 @@
 			for (var day = 1; day <= daysInMonth; day++) {
 				var date = new Date(first.getFullYear(), first.getMonth(), day);
 				var dateKey = toDateKey(date);
-				var hasSlots = Boolean(state.slotsByDate[dateKey] && state.slotsByDate[dateKey].length);
+				var hasSlots = getAvailableSlots(dateKey).length > 0;
 				var button = document.createElement('button');
 				button.type = 'button';
 				button.textContent = String(day);
@@ -292,13 +311,13 @@
 				return;
 			}
 
-			var slots = state.selectedDate ? state.slotsByDate[state.selectedDate] || [] : [];
+			var slots = state.selectedDate ? getAvailableSlots(state.selectedDate) : [];
 			timeGrid.innerHTML = '';
 
 			if (!slots.length) {
 				var empty = document.createElement('p');
 				empty.className = 'aardbei-empty-state';
-				empty.textContent = 'Geen beschikbare tijden voor deze datum.';
+				empty.textContent = 'Geen beschikbare tijden voor dit aantal personen.';
 				timeGrid.appendChild(empty);
 				return;
 			}
@@ -346,16 +365,21 @@
 		}
 
 		function selectDate(dateKey) {
-			var slots = state.slotsByDate[dateKey] || [];
+			var slots = getAvailableSlots(dateKey);
+
+			if (!slots.length) {
+				return;
+			}
+
 			state.selectedDate = dateKey;
 			state.currentMonth = monthStart(parseDateKey(dateKey));
-			state.selectedSlotId = slots.length ? slots[0].id : '';
+			state.selectedSlotId = slots[0].id;
 			render();
 			updateStepIndicator();
 		}
 
 		function selectFirstAvailableSlot() {
-			var dates = Object.keys(state.slotsByDate).sort();
+			var dates = getAvailableDates();
 			if (!dates.length) {
 				state.selectedDate = '';
 				state.selectedSlotId = '';
@@ -364,16 +388,27 @@
 				return;
 			}
 
-			if (!state.selectedDate || !state.slotsByDate[state.selectedDate]) {
+			if (!state.selectedDate || !getAvailableSlots(state.selectedDate).length) {
 				selectDate(dates[0]);
 				return;
 			}
 
 			if (!getSelectedSlot()) {
-				state.selectedSlotId = state.slotsByDate[state.selectedDate][0].id;
+				state.selectedSlotId = getAvailableSlots(state.selectedDate)[0].id;
 			}
 
 			render();
+		}
+
+		function updateAvailabilityForPersonsChange(showMessage) {
+			updateMonthLimits();
+			selectFirstAvailableSlot();
+
+			if (!getSelectedSlot() && showMessage) {
+				setMessage(mainMessage, 'Geen beschikbare tijden voor ' + state.persons + ' personen.', 'info');
+			} else if (showMessage) {
+				setMessage(mainMessage, '', '');
+			}
 		}
 
 		function fetchSlots(silent) {
@@ -394,12 +429,18 @@
 					return;
 				}
 
-				state.slots = json.data.map(parseSlot);
+				state.slots = json.data.map(parseSlot).filter(function (slot) {
+					return slot.remaining > 0;
+				});
 				groupSlots(state.slots);
 				updateMonthLimits();
 				selectFirstAvailableSlot();
-				if (state.slots.length && !silent) {
-					setMessage(mainMessage, '', '');
+				if (!silent) {
+					if (getSelectedSlot()) {
+						setMessage(mainMessage, '', '');
+					} else if (state.slots.length) {
+						setMessage(mainMessage, 'Geen beschikbare tijden voor ' + state.persons + ' personen.', 'info');
+					}
 				}
 			}).catch(function () {
 				if (!silent) {
@@ -417,27 +458,21 @@
 		if (minusButton) {
 			minusButton.addEventListener('click', function () {
 				state.persons = Math.max(1, state.persons - 1);
-				updateLabels();
+				updateAvailabilityForPersonsChange(true);
 			});
 		}
 
 		if (plusButton) {
 			plusButton.addEventListener('click', function () {
-				var slot = getSelectedSlot();
-				if (slot && state.persons >= slot.remaining) {
-					setMessage(mainMessage, 'Er zijn nog maar ' + slot.remaining + ' plekken beschikbaar.', 'error');
-					return;
-				}
 				state.persons += 1;
-				updateLabels();
-				setMessage(mainMessage, '', '');
+				updateAvailabilityForPersonsChange(true);
 			});
 		}
 
 		if (personsDisplay) {
 			personsDisplay.addEventListener('change', function () {
 				state.persons = Math.max(1, Number(personsDisplay.value) || 1);
-				updateLabels();
+				updateAvailabilityForPersonsChange(true);
 			});
 		}
 
