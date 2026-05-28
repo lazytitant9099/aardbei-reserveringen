@@ -75,11 +75,7 @@ class Aardbei_Reserveringen_Mailer {
 			. '</td></tr></table>'
 			. '</body></html>';
 
-		add_filter( 'wp_mail_content_type', array( $this, 'set_html_content_type' ) );
-		$result = wp_mail( $reservation['email'], $subject, $message );
-		remove_filter( 'wp_mail_content_type', array( $this, 'set_html_content_type' ) );
-
-		return $result;
+		return $this->send_mail( $reservation['email'], $subject, $message, array(), true );
 	}
 
 	/**
@@ -125,11 +121,7 @@ class Aardbei_Reserveringen_Mailer {
 			. '</div>'
 			. '</body></html>';
 
-		add_filter( 'wp_mail_content_type', array( $this, 'set_html_content_type' ) );
-		$result = wp_mail( $to, $subject, $message );
-		remove_filter( 'wp_mail_content_type', array( $this, 'set_html_content_type' ) );
-
-		return $result;
+		return $this->send_mail( $to, $subject, $message, array(), true );
 	}
 
 	/**
@@ -157,7 +149,7 @@ class Aardbei_Reserveringen_Mailer {
 			(int) $reservation['persons']
 		);
 
-		return wp_mail( $to, $subject, $message );
+		return $this->send_mail( $to, $subject, $message );
 	}
 
 	/**
@@ -167,6 +159,62 @@ class Aardbei_Reserveringen_Mailer {
 	 */
 	public function set_html_content_type() {
 		return 'text/html';
+	}
+
+	/**
+	 * Afzendernaam voor pluginmails.
+	 *
+	 * @return string
+	 */
+	public function set_from_name( $from_name = '' ) {
+		return $this->get_from_name();
+	}
+
+	/**
+	 * Verstuur mail met plugin-afzendernaam.
+	 *
+	 * @param string|array $to      Ontvanger(s).
+	 * @param string       $subject Onderwerp.
+	 * @param string       $message Bericht.
+	 * @param array        $headers Extra headers.
+	 * @param bool         $html    Verstuur als HTML.
+	 * @return bool
+	 */
+	private function send_mail( $to, $subject, $message, $headers = array(), $html = false ) {
+		add_filter( 'wp_mail_from_name', array( $this, 'set_from_name' ) );
+
+		if ( $html ) {
+			add_filter( 'wp_mail_content_type', array( $this, 'set_html_content_type' ) );
+		}
+
+		$result = wp_mail( $to, $subject, $message, $headers );
+
+		if ( $html ) {
+			remove_filter( 'wp_mail_content_type', array( $this, 'set_html_content_type' ) );
+		}
+
+		remove_filter( 'wp_mail_from_name', array( $this, 'set_from_name' ) );
+
+		return $result;
+	}
+
+	/**
+	 * Bepaal bedrijfsnaam voor de afzender.
+	 *
+	 * @return string
+	 */
+	private function get_from_name() {
+		$name = Aardbei_Reserveringen_Settings::get_setting( 'frontend_widget_title', '' );
+
+		if ( '' === trim( (string) $name ) ) {
+			$name = get_bloginfo( 'name' );
+		}
+
+		if ( '' === trim( (string) $name ) ) {
+			$name = __( 'Aardbei Reserveringen', 'aardbei-reserveringen' );
+		}
+
+		return wp_specialchars_decode( sanitize_text_field( $name ), ENT_QUOTES );
 	}
 
 	/**
