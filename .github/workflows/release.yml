@@ -14,10 +14,40 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Get tag name
+      - name: Get version from tag
         id: tag
-        run: echo "tag=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+        run: |
+          TAG="${GITHUB_REF#refs/tags/}"
+          VERSION="${TAG#v}"
+          echo "tag=$TAG" >> $GITHUB_OUTPUT
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+
+      - name: Update info.json
+        run: |
+          VERSION="${{ steps.tag.outputs.version }}"
+          DATE=$(date -u '+%Y-%m-%d %H:%M:%S')
+          python3 -c "
+          import json, sys
+          with open('aardbei-updates/info.json', 'r') as f:
+              data = json.load(f)
+          data['version'] = '$VERSION'
+          data['last_updated'] = '$DATE'
+          with open('aardbei-updates/info.json', 'w') as f:
+              json.dump(data, f, indent=4, ensure_ascii=False)
+          print('info.json updated to v$VERSION')
+          "
+
+      - name: Commit updated info.json
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add aardbei-updates/info.json
+          git diff --cached --quiet || git commit -m "chore: bump info.json to v${{ steps.tag.outputs.version }} [skip ci]"
+          git push origin HEAD:main
 
       - name: Build plugin ZIP
         run: |

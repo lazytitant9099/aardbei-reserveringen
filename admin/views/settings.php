@@ -11,9 +11,6 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 $settings = Aardbei_Reserveringen_Settings::get_settings();
 $weekdays = Aardbei_Reserveringen_Admin::get_weekday_options();
-$gh_user  = sanitize_text_field( get_option( 'aardbei_gh_user', '' ) );
-$gh_repo  = sanitize_text_field( get_option( 'aardbei_gh_repo', '' ) );
-$gh_token = get_option( 'aardbei_gh_token', '' ) ? str_repeat( '•', 20 ) : '';
 ?>
 <div class="wrap aardbei-admin-wrap">
 	<h1><?php echo esc_html__( 'Instellingen', 'aardbei-reserveringen' ); ?></h1>
@@ -327,14 +324,16 @@ $gh_token = get_option( 'aardbei_gh_token', '' ) ? str_repeat( '•', 20 ) : '';
 		global $aardbei_updater;
 		$update_status = $aardbei_updater instanceof Aardbei_Reserveringen_Updater
 			? $aardbei_updater->get_update_status()
-			: array( 'status' => 'not_configured', 'message' => __( 'Updater niet beschikbaar.', 'aardbei-reserveringen' ) );
+			: array( 'status' => 'pending', 'message' => __( 'Updater niet beschikbaar.', 'aardbei-reserveringen' ) );
 		?>
 
 		<!-- Status indicator -->
 		<div class="aardbei-update-status aardbei-update-status--<?php echo esc_attr( $update_status['status'] ); ?>">
 			<div class="aardbei-update-status-left">
-				<?php if ( 'connected' === $update_status['status'] ) : ?>
+				<?php if ( 'connected' === $update_status['status'] && empty( $update_status['update_available'] ) ) : ?>
 					<svg viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+				<?php elseif ( 'connected' === $update_status['status'] && ! empty( $update_status['update_available'] ) ) : ?>
+					<svg viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
 				<?php elseif ( 'error' === $update_status['status'] ) : ?>
 					<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
 				<?php else : ?>
@@ -344,14 +343,12 @@ $gh_token = get_option( 'aardbei_gh_token', '' ) ? str_repeat( '•', 20 ) : '';
 					<strong>
 					<?php
 					if ( 'connected' === $update_status['status'] ) {
-						echo esc_html( $update_status['update_available']
+						echo esc_html( ! empty( $update_status['update_available'] )
 							? __( 'Update beschikbaar', 'aardbei-reserveringen' )
-							: __( 'Verbonden met GitHub', 'aardbei-reserveringen' )
+							: __( 'Je gebruikt de nieuwste versie', 'aardbei-reserveringen' )
 						);
 					} elseif ( 'pending' === $update_status['status'] ) {
 						echo esc_html__( 'Nog niet gecontroleerd', 'aardbei-reserveringen' );
-					} elseif ( 'not_configured' === $update_status['status'] ) {
-						echo esc_html__( 'Niet geconfigureerd', 'aardbei-reserveringen' );
 					} else {
 						echo esc_html__( 'Verbindingsfout', 'aardbei-reserveringen' );
 					}
@@ -360,16 +357,10 @@ $gh_token = get_option( 'aardbei_gh_token', '' ) ? str_repeat( '•', 20 ) : '';
 					<span><?php echo esc_html( $update_status['message'] ); ?></span>
 					<?php if ( 'connected' === $update_status['status'] ) : ?>
 						<span style="font-size:11px;color:#94a3b8;">
-							<?php echo esc_html( sprintf(
-								__( 'Huidig: v%s', 'aardbei-reserveringen' ),
-								$update_status['current_version']
-							) ); ?>
+							<?php echo esc_html( sprintf( __( 'Huidig: v%s', 'aardbei-reserveringen' ), $update_status['current_version'] ) ); ?>
 							<?php if ( ! empty( $update_status['latest_version'] ) ) : ?>
 								&nbsp;·&nbsp;
-								<?php echo esc_html( sprintf(
-									__( 'Nieuwste: v%s', 'aardbei-reserveringen' ),
-									$update_status['latest_version']
-								) ); ?>
+								<?php echo esc_html( sprintf( __( 'Nieuwste: v%s', 'aardbei-reserveringen' ), $update_status['latest_version'] ) ); ?>
 							<?php endif; ?>
 						</span>
 					<?php endif; ?>
@@ -382,63 +373,21 @@ $gh_token = get_option( 'aardbei_gh_token', '' ) ? str_repeat( '•', 20 ) : '';
 			</button>
 		</div>
 
-		<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
-			<input type="hidden" name="action" value="aardbei_save_github_settings">
-			<?php wp_nonce_field( 'aardbei_save_github_settings' ); ?>
-
-			<div class="aardbei-settings-section">
-				<div class="aardbei-settings-section-header"><h3><?php echo esc_html__( 'GitHub auto-updater', 'aardbei-reserveringen' ); ?></h3></div>
-
-				<div class="aardbei-settings-row">
-					<div class="aardbei-settings-label">
-						<?php echo esc_html__( 'GitHub gebruikersnaam', 'aardbei-reserveringen' ); ?>
-						<span class="desc"><?php echo esc_html__( 'De GitHub-gebruiker die de repo beheert.', 'aardbei-reserveringen' ); ?></span>
-					</div>
-					<div class="aardbei-settings-control">
-						<input type="text" name="gh_user" value="<?php echo esc_attr( $gh_user ); ?>" placeholder="gebruikersnaam" autocomplete="off">
-					</div>
-				</div>
-
-				<div class="aardbei-settings-row">
-					<div class="aardbei-settings-label">
-						<?php echo esc_html__( 'GitHub repo naam', 'aardbei-reserveringen' ); ?>
-						<span class="desc"><?php echo esc_html__( 'Alleen de naam van de repository (zonder gebruikersnaam).', 'aardbei-reserveringen' ); ?></span>
-					</div>
-					<div class="aardbei-settings-control">
-						<input type="text" name="gh_repo" value="<?php echo esc_attr( $gh_repo ); ?>" placeholder="aardbei-reserveringen" autocomplete="off">
-					</div>
-				</div>
-
-				<div class="aardbei-settings-row">
-					<div class="aardbei-settings-label">
-						<?php echo esc_html__( 'Personal Access Token', 'aardbei-reserveringen' ); ?>
-						<span class="desc"><?php echo esc_html__( 'Optioneel — alleen nodig voor private repos of hogere API-limieten. Maak aan via GitHub → Settings → Developer settings → Tokens. Minimale scope: repo (read).', 'aardbei-reserveringen' ); ?></span>
-					</div>
-					<div class="aardbei-settings-control">
-						<input type="password" name="gh_token" value="" placeholder="<?php echo esc_attr( $gh_token ? __( '(opgeslagen — leeglaten om ongewijzigd te laten)', 'aardbei-reserveringen' ) : 'ghp_…' ); ?>" autocomplete="new-password">
-					</div>
-				</div>
+		<div class="aardbei-settings-section" style="margin-top:16px;">
+			<div class="aardbei-settings-section-header"><h3><?php echo esc_html__( 'Nieuwe versie uitbrengen', 'aardbei-reserveringen' ); ?></h3></div>
+			<div style="padding:16px 20px;font-size:13px;color:#475569;line-height:1.7;">
+				<p style="margin:0 0 10px;"><?php echo esc_html__( 'Om een update beschikbaar te maken via het WordPress-dashboard:', 'aardbei-reserveringen' ); ?></p>
+				<ol style="margin:0;padding-left:20px;">
+					<li><?php echo esc_html__( 'Bump de versie in aardbei-reserveringen.php én in aardbei-updates/info.json', 'aardbei-reserveringen' ); ?></li>
+					<li><?php echo esc_html__( 'Commit & push naar GitHub', 'aardbei-reserveringen' ); ?></li>
+					<li><?php echo esc_html__( 'Maak een tag aan — GitHub Actions bouwt automatisch de ZIP en release', 'aardbei-reserveringen' ); ?></li>
+				</ol>
+				<p style="margin:10px 0 0;"><code style="background:#f1f5f9;padding:2px 6px;border-radius:4px;font-size:12px;">git tag v1.4.0 &amp;&amp; git push origin v1.4.0</code></p>
+				<p style="margin:10px 0 0;color:#94a3b8;font-size:12px;">
+					<?php echo esc_html__( 'Update-informatie wordt opgehaald van:', 'aardbei-reserveringen' ); ?>
+					<code style="background:#f1f5f9;padding:2px 6px;border-radius:4px;"><?php echo esc_html( AARDBEI_UPDATE_URL ); ?></code>
+				</p>
 			</div>
-
-			<div class="aardbei-settings-section" style="margin-top:16px;">
-				<div class="aardbei-settings-section-header"><h3><?php echo esc_html__( 'Release aanmaken', 'aardbei-reserveringen' ); ?></h3></div>
-				<div style="padding:16px 20px;font-size:13px;color:#475569;line-height:1.6;">
-					<p style="margin:0 0 10px;"><?php echo esc_html__( 'Om een update beschikbaar te maken voor WordPress:', 'aardbei-reserveringen' ); ?></p>
-					<ol style="margin:0;padding-left:20px;">
-						<li><?php echo esc_html__( 'Bump de versie in aardbei-reserveringen.php naar bijv. 1.3.0', 'aardbei-reserveringen' ); ?></li>
-						<li><?php echo esc_html__( 'Commit & push naar GitHub en maak een release aan met tag v1.3.0', 'aardbei-reserveringen' ); ?></li>
-						<li><?php echo esc_html__( 'De GitHub Actions workflow bouwt automatisch de ZIP en maakt de release aan.', 'aardbei-reserveringen' ); ?></li>
-					</ol>
-					<p style="margin:10px 0 0;"><code style="background:#f1f5f9;padding:2px 6px;border-radius:4px;font-size:12px;">git tag v1.3.0 &amp;&amp; git push origin v1.3.0</code></p>
-				</div>
-			</div>
-
-			<div class="aardbei-settings-footer">
-				<button type="submit" class="aardbei-btn aardbei-btn--primary">
-					<svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
-					<?php echo esc_html__( 'Opslaan', 'aardbei-reserveringen' ); ?>
-				</button>
-			</div>
-		</form>
+		</div>
 	</div>
 </div>

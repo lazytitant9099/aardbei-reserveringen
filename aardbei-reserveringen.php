@@ -18,6 +18,7 @@ define( 'AARDBEI_RESERVERINGEN_DB_VERSION', '1.1.0' );
 define( 'AARDBEI_RESERVERINGEN_PLUGIN_FILE', __FILE__ );
 define( 'AARDBEI_RESERVERINGEN_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 define( 'AARDBEI_RESERVERINGEN_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
+define( 'AARDBEI_UPDATE_URL', 'https://raw.githubusercontent.com/lazytitant9099/aardbei-reserveringen/main/aardbei-updates/info.json' );
 
 require_once AARDBEI_RESERVERINGEN_PLUGIN_DIR . 'includes/class-updater.php';
 require_once AARDBEI_RESERVERINGEN_PLUGIN_DIR . 'includes/class-database.php';
@@ -33,7 +34,7 @@ require_once AARDBEI_RESERVERINGEN_PLUGIN_DIR . 'includes/class-frontend.php';
 require_once AARDBEI_RESERVERINGEN_PLUGIN_DIR . 'includes/class-ajax.php';
 
 global $aardbei_updater;
-$aardbei_updater = new Aardbei_Reserveringen_Updater( __FILE__ );
+$aardbei_updater = new Aardbei_Reserveringen_Updater( __FILE__, AARDBEI_UPDATE_URL );
 
 register_activation_hook( __FILE__, array( 'Aardbei_Reserveringen_Activator', 'activate' ) );
 register_deactivation_hook( __FILE__, array( 'Aardbei_Reserveringen_Deactivator', 'deactivate' ) );

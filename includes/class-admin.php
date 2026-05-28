@@ -22,7 +22,7 @@ class Aardbei_Reserveringen_Admin {
 		add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_admin_assets' ) );
 
 		add_action( 'admin_post_aardbei_save_settings', array( $this, 'handle_save_settings' ) );
-		add_action( 'admin_post_aardbei_save_github_settings', array( $this, 'handle_save_github_settings' ) );
+		// handle_save_github_settings is no longer needed (updater uses info.json, no credentials)
 		add_filter( 'admin_footer_text', array( $this, 'admin_footer_text' ) );
 		add_action( 'admin_post_aardbei_add_week_template', array( $this, 'handle_add_week_template' ) );
 		add_action( 'admin_post_aardbei_delete_week_template', array( $this, 'handle_delete_week_template' ) );
