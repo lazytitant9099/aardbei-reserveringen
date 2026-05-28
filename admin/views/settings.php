@@ -239,9 +239,14 @@ $weekdays = Aardbei_Reserveringen_Admin::get_weekday_options();
 				</div>
 
 				<div class="aardbei-settings-row">
-					<div class="aardbei-settings-label"><?php echo esc_html__( '"Powered by" tekst', 'aardbei-reserveringen' ); ?></div>
+					<div class="aardbei-settings-label">
+						<?php echo esc_html__( 'Powered by', 'aardbei-reserveringen' ); ?>
+						<span class="desc"><?php echo esc_html__( 'Deze branding is vast onderdeel van de widget.', 'aardbei-reserveringen' ); ?></span>
+					</div>
 					<div class="aardbei-settings-control">
-						<input type="text" name="frontend_powered_by_text" value="<?php echo esc_attr( $settings['frontend_powered_by_text'] ); ?>">
+						<a href="<?php echo esc_url( AARDBEI_MODERN_VISUALS_URL ); ?>" target="_blank" rel="noopener noreferrer" class="aardbei-link">
+							<?php echo esc_html__( 'ModernVisuals', 'aardbei-reserveringen' ); ?>
+						</a>
 					</div>
 				</div>
 			</div>

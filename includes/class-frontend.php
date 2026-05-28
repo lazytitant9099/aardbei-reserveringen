@@ -278,7 +278,6 @@ class Aardbei_Reserveringen_Frontend {
 		$card_title   = $settings['frontend_card_title'];
 		$card_subtitle = $settings['frontend_card_subtitle'];
 		$image_url    = $settings['frontend_card_image_url'];
-		$powered_by   = $settings['frontend_powered_by_text'];
 		$started_at   = (string) current_time( 'timestamp' );
 		$spam_token   = wp_hash( $started_at . '|aardbei_reservation_form' );
 
@@ -400,11 +399,13 @@ class Aardbei_Reserveringen_Frontend {
 			</form>
 
 			<div class="aardbei-message" data-aardbei-message-main aria-live="polite"></div>
-			<?php if ( '' !== $powered_by ) : ?>
-				<p class="aardbei-powered-by">
-					<?php echo esc_html__( 'Powered by', 'aardbei-reserveringen' ); ?> <strong><?php echo esc_html( $powered_by ); ?></strong>
-				</p>
-			<?php endif; ?>
+			<p class="aardbei-powered-by">
+				<span><?php echo esc_html__( 'Powered by', 'aardbei-reserveringen' ); ?></span>
+				<a href="<?php echo esc_url( AARDBEI_MODERN_VISUALS_URL ); ?>" target="_blank" rel="noopener noreferrer">
+					<img src="<?php echo esc_url( AARDBEI_MODERN_VISUALS_LOGO ); ?>" alt="<?php echo esc_attr__( 'Modern Visuals', 'aardbei-reserveringen' ); ?>" loading="lazy">
+					<strong><?php echo esc_html__( 'ModernVisuals', 'aardbei-reserveringen' ); ?></strong>
+				</a>
+			</p>
 		</div>
 		<?php
 		return ob_get_clean();

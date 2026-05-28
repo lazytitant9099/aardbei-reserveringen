@@ -467,15 +467,41 @@
 }
 
 .aardbei-powered-by {
-	margin: 12px 0 0;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: 6px;
+	margin: 14px 0 0;
 	text-align: center;
-	color: #18181b;
+	color: #000;
 	font-size: 13px;
 	line-height: 1.2;
 }
 
+.aardbei-powered-by a {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	color: #000;
+	text-decoration: none;
+}
+
+.aardbei-powered-by a:hover {
+	text-decoration: underline;
+}
+
+.aardbei-powered-by img {
+	display: inline-block;
+	width: 26px;
+	height: auto;
+	max-height: 20px;
+	object-fit: contain;
+	filter: none;
+}
+
 .aardbei-powered-by strong {
 	font-weight: 700;
+	color: #000;
 }
 
 /* ---- Confirmation screen ---- */

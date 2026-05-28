@@ -147,7 +147,7 @@ class Aardbei_Reserveringen_Database {
 			'frontend_action_bg_color' => '#171717',
 			'frontend_action_text_color' => '#ffffff',
 			'frontend_widget_width' => 420,
-			'frontend_powered_by_text' => 'Aardbei Reserveringen',
+			'frontend_powered_by_text' => 'ModernVisuals',
 		);
 	}
 }

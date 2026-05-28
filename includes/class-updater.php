@@ -106,11 +106,14 @@ class Aardbei_Reserveringen_Updater {
 		$info->tested       = isset( $remote->tested ) ? $remote->tested : '6.8';
 		$info->requires     = isset( $remote->requires ) ? $remote->requires : '6.0';
 		$info->requires_php = isset( $remote->requires_php ) ? $remote->requires_php : '7.4';
-		$info->author       = isset( $remote->author ) ? $remote->author : 'Roy Boer';
+		$info->author       = isset( $remote->author ) ? $remote->author : 'Modern Visuals';
 		$info->homepage     = isset( $remote->homepage ) ? $remote->homepage : '';
 		$info->download_link = isset( $remote->download_url ) ? $remote->download_url : '';
 		$info->trunk        = isset( $remote->download_url ) ? $remote->download_url : '';
 		$info->last_updated = isset( $remote->last_updated ) ? $remote->last_updated : '';
+		if ( isset( $remote->icons ) ) {
+			$info->icons = (array) $remote->icons;
+		}
 		$info->sections     = array(
 			'description' => isset( $remote->sections->description ) ? $remote->sections->description : '',
 			'changelog'   => isset( $remote->sections->changelog ) ? $remote->sections->changelog : '',

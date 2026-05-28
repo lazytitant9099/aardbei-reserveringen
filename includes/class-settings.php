@@ -59,7 +59,7 @@ class Aardbei_Reserveringen_Settings {
 			'frontend_action_bg_color' => '#171717',
 			'frontend_action_text_color' => '#ffffff',
 			'frontend_widget_width'   => 420,
-			'frontend_powered_by_text' => 'Aardbei Reserveringen',
+			'frontend_powered_by_text' => 'ModernVisuals',
 		);
 	}
 
@@ -128,7 +128,7 @@ class Aardbei_Reserveringen_Settings {
 			'frontend_action_bg_color' => self::sanitize_hex_setting( isset( $data['frontend_action_bg_color'] ) ? wp_unslash( $data['frontend_action_bg_color'] ) : '', $current['frontend_action_bg_color'] ),
 			'frontend_action_text_color' => self::sanitize_hex_setting( isset( $data['frontend_action_text_color'] ) ? wp_unslash( $data['frontend_action_text_color'] ) : '', $current['frontend_action_text_color'] ),
 			'frontend_widget_width'   => $frontend_widget_width,
-			'frontend_powered_by_text' => isset( $data['frontend_powered_by_text'] ) ? sanitize_text_field( wp_unslash( $data['frontend_powered_by_text'] ) ) : $current['frontend_powered_by_text'],
+			'frontend_powered_by_text' => 'ModernVisuals',
 		);
 
 		return update_option( self::OPTION_NAME, $settings );

@@ -1,9 +1,11 @@
 <?php
 /**
  * Plugin Name: Aardbei Reserveringen
- * Description: Reserveringssysteem voor aardbeien plukken met kalender, tijdsloten en capaciteit.
- * Version: 1.3.5
- * Author: Roy Boer
+ * Description: Reserveringssysteem voor aardbeien plukken met kalender, tijdsloten en capaciteit. Ontwikkeld door Modern Visuals: https://modernvisuals.nl/
+ * Version: 1.3.6
+ * Author: Modern Visuals
+ * Author URI: https://modernvisuals.nl/
+ * Plugin URI: https://modernvisuals.nl/
  * Text Domain: aardbei-reserveringen
  *
  * @package Aardbei_Reserveringen
@@ -13,12 +15,14 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'AARDBEI_RESERVERINGEN_VERSION', '1.3.5' );
+define( 'AARDBEI_RESERVERINGEN_VERSION', '1.3.6' );
 define( 'AARDBEI_RESERVERINGEN_DB_VERSION', '1.1.0' );
 define( 'AARDBEI_RESERVERINGEN_PLUGIN_FILE', __FILE__ );
 define( 'AARDBEI_RESERVERINGEN_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 define( 'AARDBEI_RESERVERINGEN_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
 define( 'AARDBEI_UPDATE_URL', 'https://raw.githubusercontent.com/lazytitant9099/aardbei-reserveringen/main/aardbei-updates/info.json' );
+define( 'AARDBEI_MODERN_VISUALS_URL', 'https://modernvisuals.nl/' );
+define( 'AARDBEI_MODERN_VISUALS_LOGO', AARDBEI_RESERVERINGEN_PLUGIN_URL . 'public/images/modernvisuals-beeldmerk-black.png' );
 
 require_once AARDBEI_RESERVERINGEN_PLUGIN_DIR . 'includes/class-updater.php';
 require_once AARDBEI_RESERVERINGEN_PLUGIN_DIR . 'includes/class-database.php';
