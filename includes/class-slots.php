@@ -84,7 +84,7 @@ class Aardbei_Reserveringen_Slots {
 			$slots[ $index ]['booked_persons'] = $booked;
 			$slots[ $index ]['remaining']      = $remaining;
 
-			if ( $public_only && $remaining <= 0 ) {
+			if ( $public_only && ( $remaining <= 0 || ! $this->is_slot_in_future( $slot ) ) ) {
 				unset( $slots[ $index ] );
 			}
 		}
@@ -471,7 +471,27 @@ class Aardbei_Reserveringen_Slots {
 			return false;
 		}
 
-		return (int) $slot['remaining'] > 0;
+		return (int) $slot['remaining'] > 0 && $this->is_slot_in_future( $slot );
+	}
+
+	/**
+	 * Is de starttijd van dit slot nog niet voorbij?
+	 *
+	 * @param array $slot Slot data.
+	 * @return bool
+	 */
+	public function is_slot_in_future( $slot ) {
+		if ( empty( $slot['date'] ) || empty( $slot['start_time'] ) ) {
+			return false;
+		}
+
+		try {
+			$slot_start = new DateTimeImmutable( $slot['date'] . ' ' . $slot['start_time'], wp_timezone() );
+		} catch ( Exception $e ) {
+			return false;
+		}
+
+		return $slot_start > current_datetime();
 	}
 
 	/**

@@ -30,6 +30,10 @@ class Aardbei_Reserveringen_Reservations {
 		$persons = isset( $data['persons'] ) ? absint( $data['persons'] ) : 0;
 		$note    = isset( $data['note'] ) ? sanitize_textarea_field( wp_unslash( $data['note'] ) ) : '';
 
+		if ( ! $this->passes_spam_check( $data ) ) {
+			return new WP_Error( 'spam_detected', __( 'De reservering kon niet worden opgeslagen. Probeer het opnieuw.', 'aardbei-reserveringen' ) );
+		}
+
 		if ( ! $slot_id ) {
 			return new WP_Error( 'slot_not_found', __( 'Tijdslot niet gevonden.', 'aardbei-reserveringen' ) );
 		}
@@ -75,7 +79,7 @@ class Aardbei_Reserveringen_Reservations {
 		}
 
 		$range = $slots->get_current_bookable_range();
-		if ( 'open' !== $slot['status'] || (int) $slot['manual_closed'] || $slot['date'] < $range['start'] || $slot['date'] > $range['end'] ) {
+		if ( 'open' !== $slot['status'] || (int) $slot['manual_closed'] || $slot['date'] < $range['start'] || $slot['date'] > $range['end'] || ! $slots->is_slot_in_future( $slot ) ) {
 			$wpdb->query( 'ROLLBACK' ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
 			return new WP_Error( 'slot_closed', __( 'Dit tijdslot is gesloten.', 'aardbei-reserveringen' ) );
 		}
@@ -131,6 +135,29 @@ class Aardbei_Reserveringen_Reservations {
 		$mailer->send_admin_notification( $reservation_id );
 
 		return $reservation_id;
+	}
+
+	/**
+	 * Eenvoudige spamcheck voor publieke reserveringen.
+	 *
+	 * @param array $data Ruwe reserveringsdata.
+	 * @return bool
+	 */
+	private function passes_spam_check( $data ) {
+		$honeypot   = isset( $data['website'] ) ? sanitize_text_field( wp_unslash( $data['website'] ) ) : '';
+		$started_at = isset( $data['aardbei_started_at'] ) ? absint( $data['aardbei_started_at'] ) : 0;
+		$token      = isset( $data['aardbei_spam_token'] ) ? sanitize_text_field( wp_unslash( $data['aardbei_spam_token'] ) ) : '';
+
+		if ( '' !== trim( $honeypot ) || ! $started_at || '' === $token ) {
+			return false;
+		}
+
+		$expected_token = wp_hash( $started_at . '|aardbei_reservation_form' );
+		if ( ! hash_equals( $expected_token, $token ) ) {
+			return false;
+		}
+
+		return current_time( 'timestamp' ) - $started_at >= 3;
 	}
 
 	/**

@@ -279,6 +279,8 @@ class Aardbei_Reserveringen_Frontend {
 		$card_subtitle = $settings['frontend_card_subtitle'];
 		$image_url    = $settings['frontend_card_image_url'];
 		$powered_by   = $settings['frontend_powered_by_text'];
+		$started_at   = (string) current_time( 'timestamp' );
+		$spam_token   = wp_hash( $started_at . '|aardbei_reservation_form' );
 
 		ob_start();
 		?>
@@ -363,6 +365,14 @@ class Aardbei_Reserveringen_Frontend {
 			<form class="aardbei-reservation-form" data-aardbei-form hidden>
 				<input type="hidden" name="slot_id" data-aardbei-slot-id value="">
 				<input type="hidden" name="persons" data-aardbei-persons-input value="2">
+				<input type="hidden" name="aardbei_started_at" value="<?php echo esc_attr( $started_at ); ?>">
+				<input type="hidden" name="aardbei_spam_token" value="<?php echo esc_attr( $spam_token ); ?>">
+				<div class="aardbei-honeypot" aria-hidden="true">
+					<label>
+						<?php echo esc_html__( 'Website', 'aardbei-reserveringen' ); ?>
+						<input type="text" name="website" value="" tabindex="-1" autocomplete="off">
+					</label>
+				</div>
 				<div class="aardbei-selected-slot" data-aardbei-selected-slot hidden></div>
 				<div class="aardbei-form-grid">
 					<label>

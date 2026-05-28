@@ -167,8 +167,19 @@
 			});
 		}
 
+		function getSlotStartDate(slot) {
+			var dateParts = String(slot.date || '').split('-').map(Number);
+			var timeParts = String(slot.startTime || '').split(':').map(Number);
+
+			return new Date(dateParts[0], dateParts[1] - 1, dateParts[2], timeParts[0] || 0, timeParts[1] || 0);
+		}
+
+		function isSlotInFuture(slot) {
+			return getSlotStartDate(slot).getTime() > Date.now();
+		}
+
 		function isSlotAvailable(slot) {
-			return Number(slot.remaining || 0) >= state.persons;
+			return Number(slot.remaining || 0) >= state.persons && isSlotInFuture(slot);
 		}
 
 		function getAvailableSlots(dateKey) {
