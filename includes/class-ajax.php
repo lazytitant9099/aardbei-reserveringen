@@ -33,6 +33,8 @@ class Aardbei_Reserveringen_Ajax {
 		add_action( 'wp_ajax_aardbei_check_for_update', array( $this, 'check_for_update' ) );
 		add_action( 'wp_ajax_aardbei_download_ics', array( $this, 'download_ics' ) );
 		add_action( 'wp_ajax_nopriv_aardbei_download_ics', array( $this, 'download_ics' ) );
+		add_action( 'wp_ajax_aardbei_check_in_reservation', array( $this, 'check_in_reservation' ) );
+		add_action( 'wp_ajax_aardbei_undo_check_in', array( $this, 'undo_check_in' ) );
 	}
 
 	/**
@@ -395,6 +397,45 @@ class Aardbei_Reserveringen_Ajax {
 	}
 
 	/**
+	 * Meld klant aan via kassa AJAX.
+	 */
+	public function check_in_reservation() {
+		$this->verify_kassa_ajax();
+
+		$id           = isset( $_POST['reservation_id'] ) ? absint( wp_unslash( $_POST['reservation_id'] ) ) : 0;
+		$reservations = new Aardbei_Reserveringen_Reservations();
+		$result       = $reservations->check_in_reservation( $id );
+
+		if ( is_wp_error( $result ) ) {
+			wp_send_json_error( array( 'message' => $result->get_error_message() ), 400 );
+		}
+
+		wp_send_json_success(
+			array(
+				'message'       => __( 'Klant aangemeld.', 'aardbei-reserveringen' ),
+				'checked_in_at' => current_time( 'H:i' ),
+			)
+		);
+	}
+
+	/**
+	 * Maak aanmelding ongedaan via kassa AJAX.
+	 */
+	public function undo_check_in() {
+		$this->verify_kassa_ajax();
+
+		$id           = isset( $_POST['reservation_id'] ) ? absint( wp_unslash( $_POST['reservation_id'] ) ) : 0;
+		$reservations = new Aardbei_Reserveringen_Reservations();
+		$result       = $reservations->undo_check_in( $id );
+
+		if ( ! $result ) {
+			wp_send_json_error( array( 'message' => __( 'Er ging iets mis.', 'aardbei-reserveringen' ) ), 400 );
+		}
+
+		wp_send_json_success( array( 'message' => __( 'Aanmelding ongedaan gemaakt.', 'aardbei-reserveringen' ) ) );
+	}
+
+	/**
 	 * Admin AJAX beveiliging.
 	 */
 	private function verify_admin_ajax() {
@@ -403,6 +444,19 @@ class Aardbei_Reserveringen_Ajax {
 		}
 
 		if ( ! check_ajax_referer( 'aardbei_admin_nonce', 'nonce', false ) ) {
+			wp_send_json_error( array( 'message' => __( 'Ongeldige beveiligingscontrole.', 'aardbei-reserveringen' ) ), 403 );
+		}
+	}
+
+	/**
+	 * Kassa AJAX beveiliging.
+	 */
+	private function verify_kassa_ajax() {
+		if ( ! current_user_can( 'aardbei_kassa' ) ) {
+			wp_send_json_error( array( 'message' => __( 'Geen rechten.', 'aardbei-reserveringen' ) ), 403 );
+		}
+
+		if ( ! check_ajax_referer( 'aardbei_kassa_nonce', 'nonce', false ) ) {
 			wp_send_json_error( array( 'message' => __( 'Ongeldige beveiligingscontrole.', 'aardbei-reserveringen' ) ), 403 );
 		}
 	}

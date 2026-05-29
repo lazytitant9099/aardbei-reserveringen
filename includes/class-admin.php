@@ -19,6 +19,7 @@ class Aardbei_Reserveringen_Admin {
 	 */
 	public function __construct() {
 		add_action( 'admin_menu', array( $this, 'register_menu' ) );
+		add_action( 'admin_menu', array( $this, 'register_kassa_menu' ) );
 		add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_admin_assets' ) );
 
 		add_action( 'admin_post_aardbei_save_settings', array( $this, 'handle_save_settings' ) );
@@ -33,6 +34,9 @@ class Aardbei_Reserveringen_Admin {
 		add_action( 'admin_post_aardbei_open_slot', array( $this, 'handle_open_slot' ) );
 		add_action( 'admin_post_aardbei_cancel_reservation', array( $this, 'handle_cancel_reservation' ) );
 		add_action( 'admin_post_aardbei_delete_slot', array( $this, 'handle_delete_slot' ) );
+
+		add_action( 'admin_post_aardbei_check_in_reservation', array( $this, 'handle_check_in_reservation' ) );
+		add_action( 'admin_post_aardbei_undo_check_in', array( $this, 'handle_undo_check_in' ) );
 	}
 
 	/**
@@ -102,6 +106,35 @@ class Aardbei_Reserveringen_Admin {
 			'aardbei-reserveringen-settings',
 			array( $this, 'render_settings' )
 		);
+
+		add_submenu_page(
+			'aardbei-reserveringen',
+			__( 'Kassa', 'aardbei-reserveringen' ),
+			__( 'Kassa', 'aardbei-reserveringen' ),
+			'aardbei_kassa',
+			'aardbei-reserveringen-kassa',
+			array( $this, 'render_kassa' )
+		);
+	}
+
+	/**
+	 * Registreer standalone kassapagina voor kassamedewerkers (geen manage_options).
+	 * Loopt apart van register_menu zodat kassamedewerkers het menu zien.
+	 */
+	public function register_kassa_menu() {
+		if ( ! current_user_can( 'aardbei_kassa' ) || current_user_can( 'manage_options' ) ) {
+			return;
+		}
+
+		add_menu_page(
+			__( 'Kassa', 'aardbei-reserveringen' ),
+			__( 'Kassa', 'aardbei-reserveringen' ),
+			'aardbei_kassa',
+			'aardbei-reserveringen-kassa',
+			array( $this, 'render_kassa' ),
+			'dashicons-store',
+			3
+		);
 	}
 
 	/**
@@ -151,6 +184,29 @@ class Aardbei_Reserveringen_Admin {
 				),
 			)
 		);
+
+		if ( 'aardbei-reserveringen-kassa' === $page ) {
+			wp_enqueue_script(
+				'aardbei-admin-kassa',
+				AARDBEI_RESERVERINGEN_PLUGIN_URL . 'admin/assets/js/admin-kassa.js',
+				array(),
+				AARDBEI_RESERVERINGEN_VERSION,
+				true
+			);
+			wp_localize_script(
+				'aardbei-admin-kassa',
+				'aardbeiKassaData',
+				array(
+					'ajaxUrl' => admin_url( 'admin-ajax.php' ),
+					'nonce'   => wp_create_nonce( 'aardbei_kassa_nonce' ),
+					'i18n'    => array(
+						'confirmUndo' => __( 'Aanmelding ongedaan maken?', 'aardbei-reserveringen' ),
+						'error'       => __( 'Er ging iets mis. Probeer opnieuw.', 'aardbei-reserveringen' ),
+						'aangemeld'   => __( 'Aangemeld', 'aardbei-reserveringen' ),
+					),
+				)
+			);
+		}
 
 		if ( 'aardbei-reserveringen-calendar' === $page ) {
 			wp_enqueue_style(
@@ -214,6 +270,51 @@ class Aardbei_Reserveringen_Admin {
 
 	public function render_settings() {
 		$this->render_view( 'aardbei-reserveringen-settings' );
+	}
+
+	public function render_kassa() {
+		if ( ! current_user_can( 'aardbei_kassa' ) ) {
+			wp_die( esc_html__( 'Je hebt geen rechten voor deze pagina.', 'aardbei-reserveringen' ) );
+		}
+
+		$this->show_admin_notice();
+
+		$view_file = AARDBEI_RESERVERINGEN_PLUGIN_DIR . 'admin/views/kassa.php';
+		if ( file_exists( $view_file ) ) {
+			include $view_file;
+		}
+	}
+
+	/**
+	 * Meld klant aan bij de kassa.
+	 */
+	public function handle_check_in_reservation() {
+		$reservation_id = isset( $_REQUEST['reservation_id'] ) ? absint( wp_unslash( $_REQUEST['reservation_id'] ) ) : 0;
+		$this->verify_kassa_action( 'aardbei_check_in_' . $reservation_id );
+
+		$date         = isset( $_REQUEST['kassa_date'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['kassa_date'] ) ) : '';
+		$reservations = new Aardbei_Reserveringen_Reservations();
+		$result       = $reservations->check_in_reservation( $reservation_id );
+
+		if ( is_wp_error( $result ) ) {
+			$this->redirect_kassa( $date, 'error', $result->get_error_message() );
+		}
+
+		$this->redirect_kassa( $date, 'updated', __( 'Klant aangemeld.', 'aardbei-reserveringen' ) );
+	}
+
+	/**
+	 * Maak aanmelding ongedaan.
+	 */
+	public function handle_undo_check_in() {
+		$reservation_id = isset( $_REQUEST['reservation_id'] ) ? absint( wp_unslash( $_REQUEST['reservation_id'] ) ) : 0;
+		$this->verify_kassa_action( 'aardbei_undo_check_in_' . $reservation_id );
+
+		$date         = isset( $_REQUEST['kassa_date'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['kassa_date'] ) ) : '';
+		$reservations = new Aardbei_Reserveringen_Reservations();
+		$reservations->undo_check_in( $reservation_id );
+
+		$this->redirect_kassa( $date, 'updated', __( 'Aanmelding ongedaan gemaakt.', 'aardbei-reserveringen' ) );
 	}
 
 	/**
@@ -474,6 +575,7 @@ class Aardbei_Reserveringen_Admin {
 			'aardbei-reserveringen-week-template' => 'week-template.php',
 			'aardbei-reserveringen-slots'         => 'slots.php',
 			'aardbei-reserveringen-settings'      => 'settings.php',
+			'aardbei-reserveringen-kassa'         => 'kassa.php',
 		);
 	}
 
@@ -526,6 +628,41 @@ class Aardbei_Reserveringen_Admin {
 		}
 
 		check_admin_referer( $nonce_action );
+	}
+
+	/**
+	 * Controleer kassa rechten en nonce.
+	 *
+	 * @param string $nonce_action Nonce action.
+	 */
+	private function verify_kassa_action( $nonce_action ) {
+		if ( ! current_user_can( 'aardbei_kassa' ) ) {
+			wp_die( esc_html__( 'Je hebt geen rechten voor deze actie.', 'aardbei-reserveringen' ) );
+		}
+
+		check_admin_referer( $nonce_action );
+	}
+
+	/**
+	 * Redirect naar kassapagina.
+	 *
+	 * @param string $date    Datum (Y-m-d) of leeg voor vandaag.
+	 * @param string $status  updated of error.
+	 * @param string $message Bericht.
+	 */
+	private function redirect_kassa( $date, $status, $message ) {
+		$args = array(
+			'page'    => 'aardbei-reserveringen-kassa',
+			$status   => 1,
+			'message' => $message,
+		);
+
+		if ( $date && preg_match( '/^\d{4}-\d{2}-\d{2}$/', $date ) ) {
+			$args['date'] = $date;
+		}
+
+		wp_safe_redirect( add_query_arg( $args, admin_url( 'admin.php' ) ) );
+		exit;
 	}
 
 	/**

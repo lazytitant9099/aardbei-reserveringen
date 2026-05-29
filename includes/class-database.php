@@ -72,6 +72,7 @@ class Aardbei_Reserveringen_Database {
 			cancel_token varchar(64) NOT NULL,
 			created_at datetime NOT NULL,
 			cancelled_at datetime NULL,
+			checked_in_at datetime NULL,
 			PRIMARY KEY  (id),
 			KEY slot_id (slot_id),
 			KEY status (status),

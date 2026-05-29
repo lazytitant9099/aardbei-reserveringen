@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Aardbei Reserveringen
  * Description: Reserveringssysteem voor aardbeien plukken met kalender, tijdsloten en capaciteit. Ontwikkeld door Modern Visuals: https://modernvisuals.nl/
- * Version: 1.3.7
+ * Version: 1.3.8
  * Author: Modern Visuals
  * Author URI: https://modernvisuals.nl/
  * Plugin URI: https://modernvisuals.nl/
@@ -15,8 +15,8 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'AARDBEI_RESERVERINGEN_VERSION', '1.3.7' );
-define( 'AARDBEI_RESERVERINGEN_DB_VERSION', '1.1.0' );
+define( 'AARDBEI_RESERVERINGEN_VERSION', '1.3.8' );
+define( 'AARDBEI_RESERVERINGEN_DB_VERSION', '1.2.0' );
 define( 'AARDBEI_RESERVERINGEN_PLUGIN_FILE', __FILE__ );
 define( 'AARDBEI_RESERVERINGEN_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 define( 'AARDBEI_RESERVERINGEN_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
@@ -49,7 +49,10 @@ register_deactivation_hook( __FILE__, array( 'Aardbei_Reserveringen_Deactivator'
 function aardbei_reserveringen_bootstrap() {
 	if ( get_option( 'aardbei_reserveringen_db_version' ) !== AARDBEI_RESERVERINGEN_DB_VERSION ) {
 		Aardbei_Reserveringen_Database::create_tables();
+		update_option( 'aardbei_reserveringen_db_version', AARDBEI_RESERVERINGEN_DB_VERSION );
 	}
+
+	Aardbei_Reserveringen_Activator::setup_roles();
 
 	new Aardbei_Reserveringen_Frontend();
 	new Aardbei_Reserveringen_Ajax();

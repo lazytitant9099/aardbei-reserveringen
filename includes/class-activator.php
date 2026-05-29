@@ -27,6 +27,29 @@ class Aardbei_Reserveringen_Activator {
 		update_option( 'aardbei_reserveringen_version', AARDBEI_RESERVERINGEN_VERSION );
 		update_option( 'aardbei_reserveringen_db_version', AARDBEI_RESERVERINGEN_DB_VERSION );
 
+		self::setup_roles();
+
 		Aardbei_Reserveringen_Cron::schedule();
+	}
+
+	/**
+	 * Maak kassamedewerker rol aan en voeg aardbei_kassa capability toe aan admins.
+	 */
+	public static function setup_roles() {
+		if ( ! get_role( 'aardbei_kassamedewerker' ) ) {
+			add_role(
+				'aardbei_kassamedewerker',
+				__( 'Kassamedewerker', 'aardbei-reserveringen' ),
+				array(
+					'read'          => true,
+					'aardbei_kassa' => true,
+				)
+			);
+		}
+
+		$administrator = get_role( 'administrator' );
+		if ( $administrator ) {
+			$administrator->add_cap( 'aardbei_kassa' );
+		}
 	}
 }

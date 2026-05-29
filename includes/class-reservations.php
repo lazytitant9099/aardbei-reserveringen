@@ -504,6 +504,63 @@ class Aardbei_Reserveringen_Reservations {
 	}
 
 	/**
+	 * Meld klant aan bij de kassa.
+	 *
+	 * @param int $reservation_id Reservering ID.
+	 * @return bool|WP_Error
+	 */
+	public function check_in_reservation( $reservation_id ) {
+		global $wpdb;
+
+		$reservation_id = absint( $reservation_id );
+		if ( ! $reservation_id ) {
+			return new WP_Error( 'reservation_not_found', __( 'Reservering niet gevonden.', 'aardbei-reserveringen' ) );
+		}
+
+		$table       = Aardbei_Reserveringen_Database::get_reservations_table();
+		$reservation = $wpdb->get_row(
+			$wpdb->prepare( "SELECT id, status FROM {$table} WHERE id = %d", $reservation_id ),
+			ARRAY_A
+		);
+
+		if ( ! $reservation ) {
+			return new WP_Error( 'reservation_not_found', __( 'Reservering niet gevonden.', 'aardbei-reserveringen' ) );
+		}
+
+		if ( 'confirmed' !== $reservation['status'] ) {
+			return new WP_Error( 'reservation_not_confirmed', __( 'Alleen bevestigde reserveringen kunnen worden aangemeld.', 'aardbei-reserveringen' ) );
+		}
+
+		return false !== $wpdb->update(
+			$table,
+			array( 'checked_in_at' => current_time( 'mysql' ) ),
+			array( 'id' => $reservation_id ),
+			array( '%s' ),
+			array( '%d' )
+		);
+	}
+
+	/**
+	 * Maak aanmelding ongedaan.
+	 *
+	 * @param int $reservation_id Reservering ID.
+	 * @return bool
+	 */
+	public function undo_check_in( $reservation_id ) {
+		global $wpdb;
+
+		$table = Aardbei_Reserveringen_Database::get_reservations_table();
+
+		return false !== $wpdb->update(
+			$table,
+			array( 'checked_in_at' => null ),
+			array( 'id' => absint( $reservation_id ) ),
+			array( '%s' ),
+			array( '%d' )
+		);
+	}
+
+	/**
 	 * Maak uniek cancel token.
 	 *
 	 * @return string

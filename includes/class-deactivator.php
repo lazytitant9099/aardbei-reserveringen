@@ -19,5 +19,6 @@ class Aardbei_Reserveringen_Deactivator {
 	 */
 	public static function deactivate() {
 		Aardbei_Reserveringen_Cron::unschedule();
+		remove_role( 'aardbei_kassamedewerker' );
 	}
 }
