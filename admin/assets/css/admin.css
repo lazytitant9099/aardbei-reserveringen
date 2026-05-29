@@ -1191,8 +1191,15 @@
 
 .aardbei-panel-actions {
 	display: flex;
+	flex-wrap: wrap;
 	gap: 8px;
 	margin: 16px 0;
+}
+
+.aardbei-panel-actions .button {
+	flex: 1 1 auto;
+	text-align: center;
+	min-width: 0;
 }
 
 .aardbei-panel-reservations-title {
