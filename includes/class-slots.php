@@ -387,7 +387,12 @@ class Aardbei_Reserveringen_Slots {
 		$total          = 0;
 		$monday         = new DateTimeImmutable( $range['start'], $this->get_timezone() );
 
-		for ( $week = 0; $week < $bookable_weeks; $week++ ) {
+		/*
+		 * Genereer voor de huidige boekbare periode én één week extra als buffer.
+		 * Zo staan er altijd toekomstige slots klaar, ook als de huidige periode
+		 * al gedeeltelijk verstreken is (bijv. maandag-only schema op vrijdag).
+		 */
+		for ( $week = 0; $week < $bookable_weeks + 1; $week++ ) {
 			$total += $this->generate_slots_for_week( $monday->modify( '+' . $week . ' weeks' )->format( 'Y-m-d' ) );
 		}
 
@@ -420,6 +425,8 @@ class Aardbei_Reserveringen_Slots {
 		$monday  = new DateTimeImmutable( $monday_date, $this->get_timezone() );
 		$now     = current_time( 'mysql' );
 
+		$today_str = date_i18n( 'Y-m-d', current_time( 'timestamp' ) );
+
 		foreach ( $templates as $template ) {
 			$weekday = absint( $template['weekday'] );
 			if ( $weekday < 1 || $weekday > 7 ) {
@@ -428,6 +435,11 @@ class Aardbei_Reserveringen_Slots {
 
 			$date             = $monday->modify( '+' . ( $weekday - 1 ) . ' days' )->format( 'Y-m-d' );
 			$duration_minutes = isset( $template['slot_duration_minutes'] ) ? absint( $template['slot_duration_minutes'] ) : 60;
+
+			// Sla verleden datums over – cleanup verwijdert ze toch.
+			if ( $date < $today_str ) {
+				continue;
+			}
 
 			if ( ! in_array( $duration_minutes, array( 15, 30, 45, 60, 90, 120 ), true ) ) {
 				$duration_minutes = 60;
