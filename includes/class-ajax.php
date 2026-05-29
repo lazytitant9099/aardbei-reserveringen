@@ -30,6 +30,7 @@ class Aardbei_Reserveringen_Ajax {
 		add_action( 'wp_ajax_aardbei_cancel_reservation', array( $this, 'admin_cancel_reservation' ) );
 		add_action( 'wp_ajax_aardbei_bulk_cancel_reservations', array( $this, 'bulk_cancel_reservations' ) );
 		add_action( 'wp_ajax_aardbei_bulk_delete_slots', array( $this, 'bulk_delete_slots' ) );
+		add_action( 'wp_ajax_aardbei_admin_delete_slot', array( $this, 'admin_delete_slot' ) );
 		add_action( 'wp_ajax_aardbei_check_for_update', array( $this, 'check_for_update' ) );
 		add_action( 'wp_ajax_aardbei_download_ics', array( $this, 'download_ics' ) );
 		add_action( 'wp_ajax_nopriv_aardbei_download_ics', array( $this, 'download_ics' ) );
@@ -308,6 +309,27 @@ class Aardbei_Reserveringen_Ajax {
 				'message'     => $message,
 			)
 		);
+	}
+
+	/**
+	 * Verwijder tijdslot via kalender-paneel.
+	 */
+	public function admin_delete_slot() {
+		$this->verify_admin_ajax();
+
+		$slot_id = isset( $_POST['slot_id'] ) ? absint( wp_unslash( $_POST['slot_id'] ) ) : 0;
+		$slots   = new Aardbei_Reserveringen_Slots();
+		$result  = $slots->delete_slot( $slot_id );
+
+		if ( is_wp_error( $result ) ) {
+			wp_send_json_error( array( 'message' => $result->get_error_message() ), 400 );
+		}
+
+		if ( ! $result ) {
+			wp_send_json_error( array( 'message' => __( 'Tijdslot kon niet worden verwijderd.', 'aardbei-reserveringen' ) ), 400 );
+		}
+
+		wp_send_json_success( array( 'message' => __( 'Tijdslot verwijderd.', 'aardbei-reserveringen' ) ) );
 	}
 
 	/**

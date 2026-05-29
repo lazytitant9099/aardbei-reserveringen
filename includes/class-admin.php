@@ -236,9 +236,11 @@ class Aardbei_Reserveringen_Admin {
 					'ajaxUrl' => admin_url( 'admin-ajax.php' ),
 					'nonce'   => wp_create_nonce( 'aardbei_admin_nonce' ),
 					'i18n'    => array(
-						'loadingError' => __( 'De kalender kon niet worden geladen.', 'aardbei-reserveringen' ),
-						'closeSlot'    => __( 'Tijdslot sluiten', 'aardbei-reserveringen' ),
-						'openSlot'     => __( 'Tijdslot openen', 'aardbei-reserveringen' ),
+						'loadingError'      => __( 'De kalender kon niet worden geladen.', 'aardbei-reserveringen' ),
+						'closeSlot'         => __( 'Tijdslot sluiten', 'aardbei-reserveringen' ),
+						'openSlot'          => __( 'Tijdslot openen', 'aardbei-reserveringen' ),
+						'deleteSlot'        => __( 'Verwijderen', 'aardbei-reserveringen' ),
+						'confirmDeleteSlot' => __( 'Weet je zeker dat je dit tijdslot wilt verwijderen?', 'aardbei-reserveringen' ),
 					),
 				)
 			);

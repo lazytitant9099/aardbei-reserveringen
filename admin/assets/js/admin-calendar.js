@@ -76,6 +76,34 @@
 
 		actions.appendChild(closeButton);
 		actions.appendChild(openButton);
+
+		// Verwijderknop — alleen tonen als er geen reserveringen zijn
+		if (parseInt(slot.booked_persons, 10) === 0) {
+			var deleteButton = document.createElement('button');
+			deleteButton.type = 'button';
+			deleteButton.className = 'button';
+			deleteButton.textContent = aardbeiAdmin.i18n.deleteSlot || 'Verwijderen';
+			deleteButton.style.cssText = 'color:#dc2626;border-color:#dc2626;margin-top:4px;';
+			deleteButton.addEventListener('click', function () {
+				if (!window.confirm(aardbeiAdmin.i18n.confirmDeleteSlot || 'Weet je zeker dat je dit tijdslot wilt verwijderen?')) {
+					return;
+				}
+				deleteButton.disabled = true;
+				post('aardbei_admin_delete_slot', { slot_id: slot.id }).then(function (json) {
+					if (!json.success) {
+						alert(json.data && json.data.message ? json.data.message : aardbeiAdmin.i18n.loadingError);
+						deleteButton.disabled = false;
+						return;
+					}
+					container.innerHTML = '<p style="color:#16a34a;font-weight:600;">✓ Tijdslot verwijderd.</p>';
+					calendar.refetchEvents();
+				}).catch(function () {
+					deleteButton.disabled = false;
+				});
+			});
+			actions.appendChild(deleteButton);
+		}
+
 		container.appendChild(actions);
 
 		var title = document.createElement('h3');
