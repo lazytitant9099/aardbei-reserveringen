@@ -454,7 +454,9 @@
 					}
 					showToast(json.data.message || (i18n.deleted || 'Verwijderd'), 'success');
 
-					ids.forEach(function (id) {
+					// Verwijder alleen de rijen die daadwerkelijk uit de DB zijn verwijderd.
+					var removedIds = (json.data && json.data.deleted_ids) ? json.data.deleted_ids.map(String) : ids;
+					removedIds.forEach(function (id) {
 						var row = document.querySelector('tr[data-slot-id="' + id + '"]');
 						if (row) row.parentNode.removeChild(row);
 					});

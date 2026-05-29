@@ -271,9 +271,10 @@ class Aardbei_Reserveringen_Ajax {
 			wp_send_json_error( array( 'message' => __( 'Geen tijdsloten geselecteerd.', 'aardbei-reserveringen' ) ), 400 );
 		}
 
-		$slots   = new Aardbei_Reserveringen_Slots();
-		$deleted = 0;
-		$skipped = 0;
+		$slots       = new Aardbei_Reserveringen_Slots();
+		$deleted     = 0;
+		$skipped     = 0;
+		$deleted_ids = array();
 
 		foreach ( $ids as $id ) {
 			$result = $slots->delete_slot( $id );
@@ -281,6 +282,7 @@ class Aardbei_Reserveringen_Ajax {
 				$skipped++;
 			} else {
 				$deleted++;
+				$deleted_ids[] = $id;
 			}
 		}
 
@@ -300,9 +302,10 @@ class Aardbei_Reserveringen_Ajax {
 
 		wp_send_json_success(
 			array(
-				'deleted' => $deleted,
-				'skipped' => $skipped,
-				'message' => $message,
+				'deleted'     => $deleted,
+				'skipped'     => $skipped,
+				'deleted_ids' => $deleted_ids,
+				'message'     => $message,
 			)
 		);
 	}

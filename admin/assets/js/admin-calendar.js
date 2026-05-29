@@ -121,6 +121,7 @@
 			slotMinTime: '07:00:00',
 			slotMaxTime: '21:00:00',
 			nowIndicator: true,
+			lazyFetching: false,
 			events: function (info, successCallback, failureCallback) {
 				post('aardbei_get_admin_slots', {
 					start: info.startStr,
