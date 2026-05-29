@@ -73,5 +73,8 @@ class Aardbei_Reserveringen_Cron {
 		 * Deze run mag dagelijks opnieuw komen: de unieke database-index voorkomt dubbele slots.
 		 */
 		$slots->generate_slots_for_next_bookable_week();
+
+		// Verwijder automatisch verlopen tijdsloten zonder reserveringen.
+		$slots->cleanup_past_slots();
 	}
 }

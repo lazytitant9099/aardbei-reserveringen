@@ -339,6 +339,43 @@ class Aardbei_Reserveringen_Slots {
 	}
 
 	/**
+	 * Verwijder verlopen tijdsloten zonder reserveringen.
+	 *
+	 * @return int Aantal verwijderde slots.
+	 */
+	public function cleanup_past_slots() {
+		global $wpdb;
+
+		$slots_table        = Aardbei_Reserveringen_Database::get_slots_table();
+		$reservations_table = Aardbei_Reserveringen_Database::get_reservations_table();
+		$today              = date_i18n( 'Y-m-d', current_time( 'timestamp' ) );
+
+		// Haal IDs op van verlopen slots zonder actieve reserveringen.
+		$ids = $wpdb->get_col(
+			$wpdb->prepare(
+				"SELECT s.id FROM {$slots_table} s
+				WHERE s.date < %s
+				AND NOT EXISTS (
+					SELECT 1 FROM {$reservations_table} r
+					WHERE r.slot_id = s.id AND r.status = 'confirmed'
+				)",
+				$today
+			)
+		);
+
+		if ( empty( $ids ) ) {
+			return 0;
+		}
+
+		$placeholders = implode( ',', array_fill( 0, count( $ids ), '%d' ) );
+		$deleted      = $wpdb->query(
+			$wpdb->prepare( "DELETE FROM {$slots_table} WHERE id IN ({$placeholders})", $ids ) // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		);
+
+		return (int) $deleted;
+	}
+
+	/**
 	 * Genereer slots voor de huidige boekbare periode.
 	 *
 	 * @return int Aantal nieuw aangemaakte slots.
