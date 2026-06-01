@@ -36,6 +36,7 @@ class Aardbei_Reserveringen_Ajax {
 		add_action( 'wp_ajax_nopriv_aardbei_download_ics', array( $this, 'download_ics' ) );
 		add_action( 'wp_ajax_aardbei_check_in_reservation', array( $this, 'check_in_reservation' ) );
 		add_action( 'wp_ajax_aardbei_undo_check_in', array( $this, 'undo_check_in' ) );
+		add_action( 'wp_ajax_aardbei_send_test_mail', array( $this, 'send_test_mail' ) );
 	}
 
 	/**
@@ -458,6 +459,25 @@ class Aardbei_Reserveringen_Ajax {
 		}
 
 		wp_send_json_success( array( 'message' => __( 'Aanmelding ongedaan gemaakt.', 'aardbei-reserveringen' ) ) );
+	}
+
+	/**
+	 * Stuur een testmail.
+	 */
+	public function send_test_mail() {
+		$this->verify_admin_ajax();
+
+		$to     = Aardbei_Reserveringen_Settings::get_setting( 'admin_email', get_option( 'admin_email' ) );
+		$mailer = new Aardbei_Reserveringen_Mailer();
+		$result = $mailer->send_test_mail( $to );
+
+		if ( $result ) {
+			wp_send_json_success( array( 'message' => sprintf( __( 'Testmail verstuurd naar %s. Controleer ook je spamfolder.', 'aardbei-reserveringen' ), $to ) ) );
+		} else {
+			$error = get_transient( 'aardbei_mail_error' );
+			$msg   = $error ? $error : __( 'Onbekende fout. Controleer of WordPress mail correct is geconfigureerd.', 'aardbei-reserveringen' );
+			wp_send_json_error( array( 'message' => $msg ), 500 );
+		}
 	}
 
 	/**

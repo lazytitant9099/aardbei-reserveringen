@@ -152,6 +152,38 @@ class Aardbei_Reserveringen_Mailer {
 	}
 
 	/**
+	 * Verstuur een testmail naar het opgegeven adres.
+	 *
+	 * @param string $to Ontvanger.
+	 * @return bool
+	 */
+	public function send_test_mail( $to ) {
+		delete_transient( 'aardbei_mail_error' );
+
+		$site_name = get_bloginfo( 'name' );
+		$subject   = sprintf( __( 'Testmail van %s', 'aardbei-reserveringen' ), $site_name );
+		$message   = '<!DOCTYPE html><html><head><meta charset="UTF-8"></head><body style="font-family:system-ui,sans-serif;padding:24px;background:#f8fafc;">'
+			. '<div style="max-width:480px;background:#fff;border-radius:8px;padding:24px;box-shadow:0 1px 3px rgba(0,0,0,.08);">'
+			. '<h2 style="margin:0 0 12px;font-size:17px;color:#0f172a;">' . esc_html__( 'Testmail', 'aardbei-reserveringen' ) . '</h2>'
+			. '<p style="margin:0;color:#475569;font-size:14px;">' . sprintf( esc_html__( 'Dit is een testmail van %s. Als je dit ontvangt werkt de e-mailfunctie correct.', 'aardbei-reserveringen' ), esc_html( $site_name ) ) . '</p>'
+			. '</div></body></html>';
+
+		return $this->send_mail( $to, $subject, $message, array(), true );
+	}
+
+	/**
+	 * Sla mailfout op in een transient voor foutdiagnose.
+	 *
+	 * @param WP_Error $wp_error Foutobject van wp_mail.
+	 */
+	public function log_mail_error( $wp_error ) {
+		$message = $wp_error->get_error_message();
+		// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+		error_log( '[Aardbei Reserveringen] Mail error: ' . $message );
+		set_transient( 'aardbei_mail_error', $message, 24 * HOUR_IN_SECONDS );
+	}
+
+	/**
 	 * HTML content-type filter callback.
 	 *
 	 * @return string
@@ -194,6 +226,7 @@ class Aardbei_Reserveringen_Mailer {
 	private function send_mail( $to, $subject, $message, $headers = array(), $html = false ) {
 		add_filter( 'wp_mail_from', array( $this, 'set_from_email' ) );
 		add_filter( 'wp_mail_from_name', array( $this, 'set_from_name' ) );
+		add_action( 'wp_mail_failed', array( $this, 'log_mail_error' ) );
 
 		if ( $html ) {
 			add_filter( 'wp_mail_content_type', array( $this, 'set_html_content_type' ) );
@@ -205,6 +238,7 @@ class Aardbei_Reserveringen_Mailer {
 			remove_filter( 'wp_mail_content_type', array( $this, 'set_html_content_type' ) );
 		}
 
+		remove_action( 'wp_mail_failed', array( $this, 'log_mail_error' ) );
 		remove_filter( 'wp_mail_from_name', array( $this, 'set_from_name' ) );
 		remove_filter( 'wp_mail_from', array( $this, 'set_from_email' ) );
 

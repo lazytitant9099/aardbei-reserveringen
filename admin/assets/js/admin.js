@@ -473,6 +473,45 @@
 
 	/* ---- Init ---- */
 
+	/* ---- Testmail ---- */
+
+	function initTestMail() {
+		var btn = document.getElementById('aardbei-send-test-mail');
+		if (!btn) return;
+
+		btn.addEventListener('click', function () {
+			btn.disabled = true;
+			var originalText = btn.textContent.trim();
+			btn.textContent = 'Versturen…';
+
+			var result = document.getElementById('aardbei-test-mail-result');
+
+			adminPost('aardbei_send_test_mail', {}).then(function (json) {
+				btn.disabled = false;
+				btn.textContent = originalText;
+
+				if (result) {
+					result.style.display = 'block';
+					if (json.success) {
+						result.style.color = '#166534';
+						result.textContent = (json.data && json.data.message) || 'Testmail verstuurd.';
+					} else {
+						result.style.color = '#991b1b';
+						result.textContent = 'Fout: ' + ((json.data && json.data.message) || 'Onbekende fout.');
+					}
+				}
+			}).catch(function () {
+				btn.disabled = false;
+				btn.textContent = originalText;
+				if (result) {
+					result.style.display = 'block';
+					result.style.color = '#991b1b';
+					result.textContent = 'Fout: geen verbinding.';
+				}
+			});
+		});
+	}
+
 	document.addEventListener('DOMContentLoaded', function () {
 		initToastFromUrl();
 		initConfirmForms();
@@ -484,5 +523,6 @@
 		initColorPreview();
 		initCheckUpdates();
 		initSlotBulkDelete();
+		initTestMail();
 	});
 }());

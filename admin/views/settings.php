@@ -87,6 +87,27 @@ $weekdays = Aardbei_Reserveringen_Admin::get_weekday_options();
 			<div class="aardbei-settings-section">
 				<div class="aardbei-settings-section-header"><h3><?php echo esc_html__( 'E-mailinstellingen', 'aardbei-reserveringen' ); ?></h3></div>
 
+				<?php $mail_error = get_transient( 'aardbei_mail_error' ); ?>
+				<?php if ( $mail_error ) : ?>
+				<div class="aardbei-notice aardbei-notice--error" style="margin-bottom:16px;">
+					<strong><?php echo esc_html__( 'Laatste mailfout:', 'aardbei-reserveringen' ); ?></strong>
+					<?php echo esc_html( $mail_error ); ?>
+				</div>
+				<?php endif; ?>
+
+				<div class="aardbei-settings-row">
+					<div class="aardbei-settings-label">
+						<?php echo esc_html__( 'Testmail', 'aardbei-reserveringen' ); ?>
+						<span class="desc"><?php echo esc_html__( 'Controleer of WordPress mails kan versturen.', 'aardbei-reserveringen' ); ?></span>
+					</div>
+					<div class="aardbei-settings-control">
+						<button type="button" class="aardbei-btn aardbei-btn--secondary" id="aardbei-send-test-mail">
+							<?php echo esc_html__( 'Stuur testmail', 'aardbei-reserveringen' ); ?>
+						</button>
+						<p class="desc" id="aardbei-test-mail-result" style="margin-top:8px;display:none;"></p>
+					</div>
+				</div>
+
 				<div class="aardbei-settings-row">
 					<div class="aardbei-settings-label">
 						<?php echo esc_html__( 'Beheerder e-mailadres', 'aardbei-reserveringen' ); ?>
