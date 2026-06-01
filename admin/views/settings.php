@@ -117,6 +117,19 @@ $weekdays = Aardbei_Reserveringen_Admin::get_weekday_options();
 
 				<div class="aardbei-settings-row">
 					<div class="aardbei-settings-label">
+						<?php echo esc_html__( 'Mail bij boeking', 'aardbei-reserveringen' ); ?>
+						<span class="desc"><?php echo esc_html__( 'Stuur een melding bij elke nieuwe reservering.', 'aardbei-reserveringen' ); ?></span>
+					</div>
+					<div class="aardbei-settings-control">
+						<label class="checkbox-row">
+							<input type="checkbox" name="booking_mail_admin" value="1" <?php checked( (int) $settings['booking_mail_admin'], 1 ); ?>>
+							<?php echo esc_html__( 'Beheerder informeren bij nieuwe reservering', 'aardbei-reserveringen' ); ?>
+						</label>
+					</div>
+				</div>
+
+				<div class="aardbei-settings-row">
+					<div class="aardbei-settings-label">
 						<?php echo esc_html__( 'Mail bij annulering', 'aardbei-reserveringen' ); ?>
 						<span class="desc"><?php echo esc_html__( 'Stuur een melding bij klantannulering.', 'aardbei-reserveringen' ); ?></span>
 					</div>

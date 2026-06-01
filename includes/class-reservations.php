@@ -164,7 +164,9 @@ class Aardbei_Reserveringen_Reservations {
 
 		$mailer = new Aardbei_Reserveringen_Mailer();
 		$mailer->send_customer_confirmation( $reservation_id );
-		$mailer->send_admin_notification( $reservation_id );
+		if ( Aardbei_Reserveringen_Settings::get_setting( 'booking_mail_admin', 1 ) ) {
+			$mailer->send_admin_notification( $reservation_id );
+		}
 
 		return $reservation_id;
 	}
