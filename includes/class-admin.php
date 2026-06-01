@@ -383,13 +383,8 @@ class Aardbei_Reserveringen_Admin {
 		$start     = isset( $_POST['start_time'] ) ? $this->sanitize_time( wp_unslash( $_POST['start_time'] ) ) : '';
 		$end       = isset( $_POST['end_time'] ) ? $this->sanitize_time( wp_unslash( $_POST['end_time'] ) ) : '';
 		$capacity  = isset( $_POST['capacity'] ) ? absint( wp_unslash( $_POST['capacity'] ) ) : 0;
-		$duration  = isset( $_POST['slot_duration_minutes'] ) ? absint( wp_unslash( $_POST['slot_duration_minutes'] ) ) : 30;
 		$active    = empty( $_POST['active'] ) ? 0 : 1;
 		$templates = Aardbei_Reserveringen_Database::get_week_templates_table();
-
-		if ( ! in_array( $duration, array( 15, 30, 45, 60, 90, 120 ), true ) ) {
-			$duration = 30;
-		}
 
 		if ( $weekday < 1 || $weekday > 7 || ! $start || ! $end || $end <= $start || $capacity < 1 ) {
 			$this->redirect( 'aardbei-reserveringen-week-template', 'error', __( 'Controleer de ingevoerde weekschema regel.', 'aardbei-reserveringen' ) );
@@ -401,9 +396,9 @@ class Aardbei_Reserveringen_Admin {
 				'weekday'    => $weekday,
 				'start_time' => $start,
 				'end_time'   => $end,
-				'capacity'   => $capacity,
-				'slot_duration_minutes' => $duration,
-				'active'     => $active,
+				'capacity'              => $capacity,
+				'slot_duration_minutes' => 30,
+				'active'                => $active,
 				'created_at' => current_time( 'mysql' ),
 				'updated_at' => null,
 			),

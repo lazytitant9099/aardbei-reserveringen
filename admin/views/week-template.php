@@ -70,17 +70,6 @@ foreach ( $templates as $tpl ) {
 				<input type="time" name="end_time" required>
 			</label>
 			<label>
-				<?php echo esc_html__( 'Tijdslotduur', 'aardbei-reserveringen' ); ?>
-				<select name="slot_duration_minutes">
-					<option value="15">15 min</option>
-					<option value="30" selected>30 min</option>
-					<option value="45">45 min</option>
-					<option value="60">60 min</option>
-					<option value="90">90 min</option>
-					<option value="120">120 min</option>
-				</select>
-			</label>
-			<label>
 				<?php echo esc_html__( 'Capaciteit', 'aardbei-reserveringen' ); ?>
 				<input type="number" name="capacity" min="1" required style="width:80px;">
 			</label>
@@ -103,7 +92,6 @@ foreach ( $templates as $tpl ) {
 				<tr>
 					<th><?php echo esc_html__( 'Weekdag', 'aardbei-reserveringen' ); ?></th>
 					<th><?php echo esc_html__( 'Tijdvenster', 'aardbei-reserveringen' ); ?></th>
-					<th><?php echo esc_html__( 'Slotduur', 'aardbei-reserveringen' ); ?></th>
 					<th><?php echo esc_html__( 'Capaciteit', 'aardbei-reserveringen' ); ?></th>
 					<th><?php echo esc_html__( 'Actief', 'aardbei-reserveringen' ); ?></th>
 					<th><?php echo esc_html__( 'Actie', 'aardbei-reserveringen' ); ?></th>
@@ -111,21 +99,12 @@ foreach ( $templates as $tpl ) {
 			</thead>
 			<tbody>
 				<?php if ( empty( $templates ) ) : ?>
-					<tr><td colspan="6" style="text-align:center;color:#94a3b8;padding:40px;"><?php echo esc_html__( 'Nog geen weekschema regels.', 'aardbei-reserveringen' ); ?></td></tr>
+					<tr><td colspan="5" style="text-align:center;color:#94a3b8;padding:40px;"><?php echo esc_html__( 'Nog geen weekschema regels.', 'aardbei-reserveringen' ); ?></td></tr>
 				<?php else : ?>
 					<?php foreach ( $templates as $template ) : ?>
 						<tr>
 							<td><strong><?php echo esc_html( isset( $weekdays[ (int) $template['weekday'] ] ) ? $weekdays[ (int) $template['weekday'] ] : $template['weekday'] ); ?></strong></td>
 							<td><?php echo esc_html( substr( $template['start_time'], 0, 5 ) . ' – ' . substr( $template['end_time'], 0, 5 ) ); ?></td>
-							<td>
-								<?php
-								printf(
-									/* translators: %d: minutes. */
-									esc_html__( '%d min', 'aardbei-reserveringen' ),
-									isset( $template['slot_duration_minutes'] ) ? absint( $template['slot_duration_minutes'] ) : 60
-								);
-								?>
-							</td>
 							<td><?php echo esc_html( number_format_i18n( $template['capacity'] ) ); ?></td>
 							<td>
 								<span class="aardbei-status aardbei-status-<?php echo (int) $template['active'] ? 'open' : 'closed'; ?>">
@@ -151,15 +130,27 @@ foreach ( $templates as $tpl ) {
 	</div>
 
 	<!-- Tijdsloten genereren -->
+	<?php
+	$slots_helper   = new Aardbei_Reserveringen_Slots();
+	$bookable_range = $slots_helper->get_current_bookable_range();
+	$range_start    = date_i18n( get_option( 'date_format' ), strtotime( $bookable_range['start'] ) );
+	$range_end      = date_i18n( get_option( 'date_format' ), strtotime( $bookable_range['end'] ) );
+	?>
 	<div class="aardbei-form-card" style="margin-top:24px;">
 		<h3><?php echo esc_html__( 'Tijdsloten genereren', 'aardbei-reserveringen' ); ?></h3>
-		<p style="margin:0 0 14px;font-size:13px;color:#475569;"><?php echo esc_html__( 'Genereer tijdsloten voor de volgende boekbare week op basis van dit weekschema. De dagelijkse cron doet dit automatisch.', 'aardbei-reserveringen' ); ?></p>
+		<p style="margin:0 0 8px;font-size:13px;color:#475569;">
+			<?php echo esc_html__( 'Genereert tijdsloten voor de huidige boekbare periode op basis van dit weekschema. De dagelijkse cron doet dit automatisch.', 'aardbei-reserveringen' ); ?>
+		</p>
+		<p style="margin:0 0 14px;font-size:13px;">
+			<?php echo esc_html__( 'Doelperiode:', 'aardbei-reserveringen' ); ?>
+			<strong><?php echo esc_html( $range_start . ' – ' . $range_end ); ?></strong>
+		</p>
 		<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
 			<input type="hidden" name="action" value="aardbei_generate_next_week_slots">
 			<?php wp_nonce_field( 'aardbei_generate_next_week_slots' ); ?>
 			<button type="submit" class="aardbei-btn aardbei-btn--primary">
 				<svg viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
-				<?php echo esc_html__( 'Genereer tijdsloten voor volgende week', 'aardbei-reserveringen' ); ?>
+				<?php echo esc_html__( 'Genereer tijdsloten', 'aardbei-reserveringen' ); ?>
 			</button>
 		</form>
 	</div>

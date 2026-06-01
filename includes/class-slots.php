@@ -433,23 +433,18 @@ class Aardbei_Reserveringen_Slots {
 				continue;
 			}
 
-			$date             = $monday->modify( '+' . ( $weekday - 1 ) . ' days' )->format( 'Y-m-d' );
-			$duration_minutes = isset( $template['slot_duration_minutes'] ) ? absint( $template['slot_duration_minutes'] ) : 60;
+			$date = $monday->modify( '+' . ( $weekday - 1 ) . ' days' )->format( 'Y-m-d' );
 
 			// Sla verleden datums over – cleanup verwijdert ze toch.
 			if ( $date < $today_str ) {
 				continue;
 			}
 
-			if ( ! in_array( $duration_minutes, array( 15, 30, 45, 60, 90, 120 ), true ) ) {
-				$duration_minutes = 60;
-			}
-
 			$slot_start = new DateTimeImmutable( $date . ' ' . $template['start_time'], $this->get_timezone() );
 			$range_end  = new DateTimeImmutable( $date . ' ' . $template['end_time'], $this->get_timezone() );
 
 			while ( $slot_start < $range_end ) {
-				$slot_end = $slot_start->modify( '+' . $duration_minutes . ' minutes' );
+				$slot_end = $slot_start->modify( '+30 minutes' );
 
 				if ( $slot_end > $range_end ) {
 					break;
