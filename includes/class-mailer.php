@@ -170,7 +170,19 @@ class Aardbei_Reserveringen_Mailer {
 	}
 
 	/**
-	 * Verstuur mail met plugin-afzendernaam.
+	 * Afzenderadres voor pluginmails.
+	 * Gebruik het WordPress admin-adres zodat het overeenkomt met de SPF-configuratie op de server.
+	 *
+	 * @param string $from_email Huidig afzenderadres.
+	 * @return string
+	 */
+	public function set_from_email( $from_email = '' ) {
+		$admin_email = get_option( 'admin_email' );
+		return is_email( $admin_email ) ? $admin_email : $from_email;
+	}
+
+	/**
+	 * Verstuur mail met plugin-afzendernaam en -adres.
 	 *
 	 * @param string|array $to      Ontvanger(s).
 	 * @param string       $subject Onderwerp.
@@ -180,6 +192,7 @@ class Aardbei_Reserveringen_Mailer {
 	 * @return bool
 	 */
 	private function send_mail( $to, $subject, $message, $headers = array(), $html = false ) {
+		add_filter( 'wp_mail_from', array( $this, 'set_from_email' ) );
 		add_filter( 'wp_mail_from_name', array( $this, 'set_from_name' ) );
 
 		if ( $html ) {
@@ -193,6 +206,7 @@ class Aardbei_Reserveringen_Mailer {
 		}
 
 		remove_filter( 'wp_mail_from_name', array( $this, 'set_from_name' ) );
+		remove_filter( 'wp_mail_from', array( $this, 'set_from_email' ) );
 
 		return $result;
 	}
