@@ -33,7 +33,7 @@ class Aardbei_Reserveringen_Mailer {
 		$rows = array(
 			array( __( 'Reserveringsnr.', 'aardbei-reserveringen' ), '#' . absint( $reservation_id ) ),
 			array( __( 'Datum', 'aardbei-reserveringen' ), $this->format_date( $reservation['date'] ) ),
-			array( __( 'Tijd', 'aardbei-reserveringen' ), $this->format_time( $reservation['start_time'] ) . ' – ' . $this->format_time( $reservation['end_time'] ) ),
+			array( __( 'Tijd', 'aardbei-reserveringen' ), $this->format_time( $reservation['start_time'] ) ),
 			array( __( 'Personen', 'aardbei-reserveringen' ), (int) $reservation['persons'] ),
 			array( __( 'Naam', 'aardbei-reserveringen' ), $reservation['name'] ),
 		);
@@ -96,7 +96,7 @@ class Aardbei_Reserveringen_Mailer {
 		$rows = array(
 			array( 'Reserveringsnr.', '#' . absint( $reservation_id ) ),
 			array( 'Datum', $this->format_date( $reservation['date'] ) ),
-			array( 'Tijd', $this->format_time( $reservation['start_time'] ) . ' – ' . $this->format_time( $reservation['end_time'] ) ),
+			array( 'Tijd', $this->format_time( $reservation['start_time'] ) ),
 			array( 'Naam', $reservation['name'] ),
 			array( 'E-mail', $reservation['email'] ),
 			array( 'Telefoon', $reservation['phone'] ),
@@ -139,11 +139,10 @@ class Aardbei_Reserveringen_Mailer {
 		$to      = Aardbei_Reserveringen_Settings::get_setting( 'admin_email', get_option( 'admin_email' ) );
 		$subject = __( 'Reservering geannuleerd', 'aardbei-reserveringen' );
 		$message = sprintf(
-			"Reservering geannuleerd:\n\nNr.: #%d\nDatum: %s\nTijd: %s – %s\nNaam: %s\nE-mail: %s\nPersonen: %d",
+			"Reservering geannuleerd:\n\nNr.: #%d\nDatum: %s\nTijd: %s\nNaam: %s\nE-mail: %s\nPersonen: %d",
 			absint( $reservation_id ),
 			$this->format_date( $reservation['date'] ),
 			$this->format_time( $reservation['start_time'] ),
-			$this->format_time( $reservation['end_time'] ),
 			$reservation['name'],
 			$reservation['email'],
 			(int) $reservation['persons']

@@ -232,7 +232,7 @@
 			}
 			if (selectedSlot && slot) {
 				selectedSlot.hidden = false;
-				selectedSlot.textContent = guestText + ' · ' + formatDateLabel(slot.date) + ' · ' + slot.startTime + ' - ' + slot.endTime;
+				selectedSlot.textContent = guestText + ' · ' + formatDateLabel(slot.date) + ' · ' + slot.startTime;
 			} else if (selectedSlot) {
 				selectedSlot.hidden = true;
 				selectedSlot.textContent = '';
@@ -339,7 +339,7 @@
 				button.className = 'aardbei-time-button';
 				button.classList.toggle('is-selected', String(slot.id) === String(state.selectedSlotId));
 
-				var timeText = slot.startTime + ' – ' + slot.endTime;
+				var timeText = slot.startTime;
 				button.textContent = timeText;
 
 				if (aardbeiFrontend.showRemainingCapacity && slot.remaining > 0) {
@@ -543,7 +543,7 @@
 
 		function showConfirmation(submittedData, slotInfo, reservationId, cancelToken) {
 			var dateLabel = slotInfo ? formatDateLabel(slotInfo.date) : '';
-			var timeLabel = slotInfo ? (slotInfo.startTime + ' – ' + slotInfo.endTime) : '';
+			var timeLabel = slotInfo ? slotInfo.startTime : '';
 			var guestText = state.persons === 1 ? '1 gast' : state.persons + ' gasten';
 
 			var html = '<div class="aardbei-confirmation">'
