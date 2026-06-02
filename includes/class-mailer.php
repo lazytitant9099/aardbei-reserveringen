@@ -224,8 +224,6 @@ class Aardbei_Reserveringen_Mailer {
 	 * @return bool
 	 */
 	private function send_mail( $to, $subject, $message, $headers = array(), $html = false ) {
-		add_filter( 'wp_mail_from', array( $this, 'set_from_email' ) );
-		add_filter( 'wp_mail_from_name', array( $this, 'set_from_name' ) );
 		add_action( 'wp_mail_failed', array( $this, 'log_mail_error' ) );
 
 		if ( $html ) {
@@ -239,8 +237,6 @@ class Aardbei_Reserveringen_Mailer {
 		}
 
 		remove_action( 'wp_mail_failed', array( $this, 'log_mail_error' ) );
-		remove_filter( 'wp_mail_from_name', array( $this, 'set_from_name' ) );
-		remove_filter( 'wp_mail_from', array( $this, 'set_from_email' ) );
 
 		return $result;
 	}
