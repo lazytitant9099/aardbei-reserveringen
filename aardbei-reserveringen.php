@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Aardbei Reserveringen
  * Description: Reserveringssysteem voor aardbeien plukken met kalender, tijdsloten en capaciteit. Ontwikkeld door Modern Visuals: https://modernvisuals.nl/
- * Version: 1.5.2
+ * Version: 1.5.3
  * Author: Modern Visuals
  * Author URI: https://modernvisuals.nl/
  * Plugin URI: https://modernvisuals.nl/
@@ -15,7 +15,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'AARDBEI_RESERVERINGEN_VERSION', '1.5.2' );
+define( 'AARDBEI_RESERVERINGEN_VERSION', '1.5.3' );
 define( 'AARDBEI_RESERVERINGEN_DB_VERSION', '1.2.0' );
 define( 'AARDBEI_RESERVERINGEN_PLUGIN_FILE', __FILE__ );
 define( 'AARDBEI_RESERVERINGEN_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
@@ -50,6 +50,17 @@ function aardbei_reserveringen_bootstrap() {
 	if ( get_option( 'aardbei_reserveringen_db_version' ) !== AARDBEI_RESERVERINGEN_DB_VERSION ) {
 		Aardbei_Reserveringen_Database::create_tables();
 		update_option( 'aardbei_reserveringen_db_version', AARDBEI_RESERVERINGEN_DB_VERSION );
+	}
+
+	// Migratie v1.5.3: admin_email bijwerken naar het juiste contactadres
+	// als het nog op de WordPress-site-email stond (nooit handmatig gewijzigd).
+	if ( ! get_option( 'aardbei_migration_153_email' ) ) {
+		$saved = get_option( Aardbei_Reserveringen_Settings::OPTION_NAME, array() );
+		if ( is_array( $saved ) && isset( $saved['admin_email'] ) && $saved['admin_email'] !== 'reservering@kopenwaarhetgroeit.nl' ) {
+			$saved['admin_email'] = 'reservering@kopenwaarhetgroeit.nl';
+			update_option( Aardbei_Reserveringen_Settings::OPTION_NAME, $saved );
+		}
+		update_option( 'aardbei_migration_153_email', true );
 	}
 
 	Aardbei_Reserveringen_Activator::setup_roles();
