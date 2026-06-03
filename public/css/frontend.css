@@ -634,7 +634,7 @@
 	bottom: 22px;
 	z-index: 999999;
 	width: min(var(--aardbei-widget-width, 420px), calc(100vw - 44px));
-	max-height: calc(100vh - 44px);
+	max-height: calc(100vh - 110px);
 	overflow: auto;
 	padding: 18px;
 	border: 1px solid rgba(228, 228, 231, 0.95);
@@ -724,7 +724,7 @@
 		right: 10px;
 		bottom: 72px;
 		width: calc(100vw - 20px);
-		max-height: calc(100vh - 92px);
+		max-height: calc(100vh - 160px);
 		padding: 14px;
 		border-radius: 12px;
 	}
@@ -952,6 +952,10 @@
 }
 
 /* ---- Contact bar (9+ personen / vol slot) ---- */
+
+.aardbei-contact-bar[hidden] {
+	display: none;
+}
 
 .aardbei-contact-bar {
 	display: flex;
