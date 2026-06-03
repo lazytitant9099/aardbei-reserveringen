@@ -66,6 +66,16 @@ $weekdays = Aardbei_Reserveringen_Admin::get_weekday_options();
 						<input type="number" min="1" max="8" name="bookable_weeks" value="<?php echo esc_attr( $settings['bookable_weeks'] ); ?>" style="max-width:80px;">
 					</div>
 				</div>
+
+				<div class="aardbei-settings-row">
+					<div class="aardbei-settings-label">
+						<?php echo esc_html__( 'Groepsgrootte voor contact', 'aardbei-reserveringen' ); ?>
+						<span class="desc"><?php echo esc_html__( 'Toon een mailknop in de widget vanaf dit aantal personen.', 'aardbei-reserveringen' ); ?></span>
+					</div>
+					<div class="aardbei-settings-control">
+						<input type="number" min="1" max="99" name="max_persons_for_contact" value="<?php echo esc_attr( $settings['max_persons_for_contact'] ); ?>" style="max-width:80px;">
+					</div>
+				</div>
 			</div>
 
 			<div class="aardbei-settings-footer">

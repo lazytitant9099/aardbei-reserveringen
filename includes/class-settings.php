@@ -41,6 +41,7 @@ class Aardbei_Reserveringen_Settings {
 			'opening_weekday'         => 7,
 			'opening_time'            => '09:00',
 			'bookable_weeks'          => 1,
+			'max_persons_for_contact' => 9,
 			'admin_email'             => get_option( 'admin_email' ),
 			'customer_mail_subject'   => __( 'Je reservering voor aardbeien plukken', 'aardbei-reserveringen' ),
 			'admin_mail_subject'      => __( 'Nieuwe reservering voor aardbeien plukken', 'aardbei-reserveringen' ),
@@ -84,6 +85,9 @@ class Aardbei_Reserveringen_Settings {
 		$bookable_weeks = isset( $data['bookable_weeks'] ) ? absint( wp_unslash( $data['bookable_weeks'] ) ) : 1;
 		$bookable_weeks = min( 8, max( 1, $bookable_weeks ) );
 
+		$max_persons_for_contact = isset( $data['max_persons_for_contact'] ) ? absint( wp_unslash( $data['max_persons_for_contact'] ) ) : 9;
+		$max_persons_for_contact = min( 99, max( 1, $max_persons_for_contact ) );
+
 		$admin_email = isset( $data['admin_email'] ) ? sanitize_email( wp_unslash( $data['admin_email'] ) ) : get_option( 'admin_email' );
 		if ( ! is_email( $admin_email ) ) {
 			$admin_email = get_option( 'admin_email' );
@@ -111,6 +115,7 @@ class Aardbei_Reserveringen_Settings {
 			'opening_weekday'         => $opening_weekday,
 			'opening_time'            => $opening_time,
 			'bookable_weeks'          => $bookable_weeks,
+			'max_persons_for_contact' => $max_persons_for_contact,
 			'admin_email'             => $admin_email,
 			'customer_mail_subject'   => isset( $data['customer_mail_subject'] ) ? sanitize_text_field( wp_unslash( $data['customer_mail_subject'] ) ) : $current['customer_mail_subject'],
 			'admin_mail_subject'      => isset( $data['admin_mail_subject'] ) ? sanitize_text_field( wp_unslash( $data['admin_mail_subject'] ) ) : $current['admin_mail_subject'],

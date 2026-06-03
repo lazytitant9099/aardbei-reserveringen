@@ -609,7 +609,7 @@
 	position: fixed;
 	right: 18px;
 	bottom: 18px;
-	z-index: 9998;
+	z-index: 999998;
 	border: 0;
 	border-radius: 999px;
 	background: var(--aardbei-popup-button-bg, #cf2e2e);
@@ -632,7 +632,7 @@
 	position: fixed;
 	right: 22px;
 	bottom: 22px;
-	z-index: 10000;
+	z-index: 999999;
 	width: min(var(--aardbei-widget-width, 420px), calc(100vw - 44px));
 	max-height: calc(100vh - 44px);
 	overflow: auto;
@@ -657,7 +657,7 @@
 	display: none;
 	position: fixed;
 	inset: 0;
-	z-index: 9999;
+	z-index: 999997;
 	background: rgba(15, 23, 42, 0.28);
 }
 
@@ -949,4 +949,27 @@
 .aardbei-calendar-link--ics {
 	background: var(--aardbei-muted);
 	color: var(--aardbei-foreground);
+}
+
+/* ---- Contact bar (9+ personen / vol slot) ---- */
+
+.aardbei-contact-bar {
+	display: flex;
+	align-items: flex-start;
+	gap: 8px;
+	margin: 12px 0 4px;
+	padding: 10px 14px;
+	border-radius: 8px;
+	background: #fff7ed;
+	border: 1px solid #fed7aa;
+	font-size: 13px;
+	line-height: 1.45;
+	color: #92400e;
+}
+
+.aardbei-contact-bar a {
+	color: #92400e;
+	font-weight: 700;
+	word-break: break-all;
+	text-decoration: underline;
 }

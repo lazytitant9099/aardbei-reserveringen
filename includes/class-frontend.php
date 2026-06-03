@@ -350,7 +350,9 @@ body{background:#f7f9fa;margin:0;padding:0;font-family:-apple-system,BlinkMacSys
 			array(
 				'ajaxUrl'               => admin_url( 'admin-ajax.php' ),
 				'nonce'                 => wp_create_nonce( 'aardbei_frontend_nonce' ),
-				'showRemainingCapacity' => (bool) Aardbei_Reserveringen_Settings::get_setting( 'show_remaining_capacity', 1 ),
+				'showRemainingCapacity'  => (bool) Aardbei_Reserveringen_Settings::get_setting( 'show_remaining_capacity', 1 ),
+				'contactEmail'           => Aardbei_Reserveringen_Settings::get_setting( 'admin_email', get_option( 'admin_email' ) ),
+				'maxPersonsForContact'   => (int) Aardbei_Reserveringen_Settings::get_setting( 'max_persons_for_contact', 9 ),
 				'i18n'                  => array(
 					'chooseSlot'      => __( 'Kies eerst een pluktijd.', 'aardbei-reserveringen' ),
 					'loadingError'    => __( 'De kalender kon niet worden geladen.', 'aardbei-reserveringen' ),
@@ -463,6 +465,10 @@ body{background:#f7f9fa;margin:0;padding:0;font-family:-apple-system,BlinkMacSys
 				<div class="aardbei-selector-panel" data-aardbei-panel="time" hidden>
 					<div class="aardbei-time-grid" data-aardbei-time-grid></div>
 				</div>
+			</div>
+
+			<div class="aardbei-contact-bar" data-aardbei-contact-bar hidden>
+				&#x2709;&#xFE0F; <span data-aardbei-contact-msg></span>
 			</div>
 
 			<button type="button" class="aardbei-reserve-open-button" data-aardbei-open-form>

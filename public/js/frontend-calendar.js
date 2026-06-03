@@ -126,6 +126,7 @@
 			persons: Number(personsDisplay ? personsDisplay.value : 2) || 2,
 			slots: [],
 			slotsByDate: {},
+			allSlotsByDate: {},
 			selectedDate: '',
 			selectedSlotId: '',
 			currentMonth: monthStart(new Date()),
@@ -368,6 +369,35 @@
 			}
 		}
 
+		function updateContactBar() {
+			var bar = widget.querySelector('[data-aardbei-contact-bar]');
+			var msgEl = bar ? bar.querySelector('[data-aardbei-contact-msg]') : null;
+			if (!bar || !msgEl) return;
+
+			var email = ((aardbeiFrontend.contactEmail) || '').trim();
+			var maxP  = aardbeiFrontend.maxPersonsForContact || 9;
+			var link  = email ? '<a href="mailto:' + email + '">' + email + '</a>' : email;
+
+			// Geval 1: te veel personen
+			if (state.persons >= maxP) {
+				msgEl.innerHTML = 'Voor ' + state.persons + ' personen? Mail naar ' + link;
+				bar.hidden = false;
+				return;
+			}
+
+			// Geval 2: datum gekozen maar alle slots op die dag zijn vol
+			var allForDate = state.selectedDate ? (state.allSlotsByDate[state.selectedDate] || []) : [];
+			var hasFullSlots = allForDate.length > 0 && getAvailableSlots(state.selectedDate).length === 0;
+
+			if (hasFullSlots) {
+				msgEl.innerHTML = 'Alle tijden op deze dag zijn vol. Mail naar ' + link;
+				bar.hidden = false;
+				return;
+			}
+
+			bar.hidden = true;
+		}
+
 		function render() {
 			updateLabels();
 			renderDays();
@@ -378,14 +408,11 @@
 		function selectDate(dateKey) {
 			var slots = getAvailableSlots(dateKey);
 
-			if (!slots.length) {
-				return;
-			}
-
 			state.selectedDate = dateKey;
 			state.currentMonth = monthStart(parseDateKey(dateKey));
-			state.selectedSlotId = slots[0].id;
+			state.selectedSlotId = slots.length ? slots[0].id : '';
 			render();
+			updateContactBar();
 			updateStepIndicator();
 		}
 
@@ -395,6 +422,7 @@
 				state.selectedDate = '';
 				state.selectedSlotId = '';
 				render();
+				updateContactBar();
 				setMessage(mainMessage, aardbeiFrontend.i18n.noSlots, 'info');
 				return;
 			}
@@ -409,6 +437,7 @@
 			}
 
 			render();
+			updateContactBar();
 		}
 
 		function updateAvailabilityForPersonsChange(showMessage) {
@@ -440,8 +469,15 @@
 					return;
 				}
 
-				state.slots = json.data.map(parseSlot).filter(function (slot) {
+				var allSlots = json.data.map(parseSlot);
+				state.slots = allSlots.filter(function (slot) {
 					return slot.remaining > 0;
+				});
+				// Bewaar alle slots (incl. volle) voor contactbar-detectie
+				state.allSlotsByDate = {};
+				allSlots.forEach(function (s) {
+					if (!state.allSlotsByDate[s.date]) state.allSlotsByDate[s.date] = [];
+					state.allSlotsByDate[s.date].push(s);
 				});
 				groupSlots(state.slots);
 				updateMonthLimits();
@@ -470,6 +506,7 @@
 			minusButton.addEventListener('click', function () {
 				state.persons = Math.max(1, state.persons - 1);
 				updateAvailabilityForPersonsChange(true);
+				updateContactBar();
 			});
 		}
 
@@ -477,6 +514,7 @@
 			plusButton.addEventListener('click', function () {
 				state.persons += 1;
 				updateAvailabilityForPersonsChange(true);
+				updateContactBar();
 			});
 		}
 
@@ -484,6 +522,7 @@
 			personsDisplay.addEventListener('change', function () {
 				state.persons = Math.max(1, Number(personsDisplay.value) || 1);
 				updateAvailabilityForPersonsChange(true);
+				updateContactBar();
 			});
 		}
 
