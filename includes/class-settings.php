@@ -41,6 +41,7 @@ class Aardbei_Reserveringen_Settings {
 			'opening_weekday'         => 7,
 			'opening_time'            => '09:00',
 			'bookable_weeks'          => 1,
+			'auto_generate_slots'     => 0,
 			'max_persons_for_contact' => 9,
 			'admin_email'             => 'reservering@kopenwaarhetgroeit.nl',
 			'customer_mail_subject'   => __( 'Je reservering voor aardbeien plukken', 'aardbei-reserveringen' ),
@@ -100,6 +101,7 @@ class Aardbei_Reserveringen_Settings {
 			$settings['opening_weekday']         = $opening_weekday;
 			$settings['opening_time']            = $opening_time;
 			$settings['bookable_weeks']          = $bookable_weeks;
+			$settings['auto_generate_slots']     = empty( $data['auto_generate_slots'] ) ? 0 : 1;
 			$settings['max_persons_for_contact'] = $max_persons_for_contact;
 		}
 

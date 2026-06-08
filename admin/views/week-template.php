@@ -139,7 +139,7 @@ foreach ( $templates as $tpl ) {
 	<div class="aardbei-form-card" style="margin-top:24px;">
 		<h3><?php echo esc_html__( 'Tijdsloten genereren', 'aardbei-reserveringen' ); ?></h3>
 		<p style="margin:0 0 8px;font-size:13px;color:#475569;">
-			<?php echo esc_html__( 'Genereert tijdsloten voor de huidige boekbare periode op basis van dit weekschema. De dagelijkse cron doet dit automatisch.', 'aardbei-reserveringen' ); ?>
+			<?php echo esc_html__( 'Genereert tijdsloten voor de huidige boekbare periode op basis van dit weekschema. Automatische generatie kun je aan- of uitzetten bij Instellingen.', 'aardbei-reserveringen' ); ?>
 		</p>
 		<p style="margin:0 0 14px;font-size:13px;">
 			<?php echo esc_html__( 'Doelperiode:', 'aardbei-reserveringen' ); ?>

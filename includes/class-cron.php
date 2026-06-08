@@ -67,12 +67,15 @@ class Aardbei_Reserveringen_Cron {
 	 */
 	public function run() {
 		$slots = new Aardbei_Reserveringen_Slots();
+		$auto_generate_slots = (int) Aardbei_Reserveringen_Settings::get_setting( 'auto_generate_slots', 0 );
 
 		/*
 		 * De boekbare periode wordt bepaald door opening_weekday/opening_time.
 		 * Deze run mag dagelijks opnieuw komen: de unieke database-index voorkomt dubbele slots.
 		 */
-		$slots->generate_slots_for_next_bookable_week();
+		if ( $auto_generate_slots ) {
+			$slots->generate_slots_for_next_bookable_week();
+		}
 
 		// Verwijder automatisch verlopen tijdsloten zonder reserveringen.
 		$slots->cleanup_past_slots();

@@ -69,6 +69,19 @@ $weekdays = Aardbei_Reserveringen_Admin::get_weekday_options();
 
 				<div class="aardbei-settings-row">
 					<div class="aardbei-settings-label">
+						<?php echo esc_html__( 'Automatisch tijdsloten genereren', 'aardbei-reserveringen' ); ?>
+						<span class="desc"><?php echo esc_html__( 'Als dit uit staat, genereer je tijdsloten handmatig via Weekschema. Verlopen lege tijdsloten worden nog wel automatisch opgeschoond.', 'aardbei-reserveringen' ); ?></span>
+					</div>
+					<div class="aardbei-settings-control">
+						<label class="checkbox-row">
+							<input type="checkbox" name="auto_generate_slots" value="1" <?php checked( (int) $settings['auto_generate_slots'], 1 ); ?>>
+							<?php echo esc_html__( 'Automatische generatie inschakelen', 'aardbei-reserveringen' ); ?>
+						</label>
+					</div>
+				</div>
+
+				<div class="aardbei-settings-row">
+					<div class="aardbei-settings-label">
 						<?php echo esc_html__( 'Groepsgrootte voor contact', 'aardbei-reserveringen' ); ?>
 						<span class="desc"><?php echo esc_html__( 'Toon een mailknop in de widget vanaf dit aantal personen.', 'aardbei-reserveringen' ); ?></span>
 					</div>
