@@ -63,7 +63,6 @@ class Aardbei_Reserveringen_Mailer {
 			. '</table>'
 			. '</td></tr>'
 			. '<tr><td style="padding:8px 32px 32px;">'
-			. '<p style="margin:0 0 16px;color:#475569;font-size:13px;">' . esc_html__( 'Betaling vindt plaats op locatie.', 'aardbei-reserveringen' ) . '</p>'
 			. '<a href="' . esc_url( $cancel_url ) . '" style="display:inline-block;padding:10px 20px;background:#fee2e2;color:#991b1b;font-size:13px;font-weight:600;border-radius:6px;text-decoration:none;">'
 			. esc_html__( 'Reservering annuleren', 'aardbei-reserveringen' )
 			. '</a>'
